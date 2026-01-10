@@ -2,16 +2,14 @@ import { Entity, Property } from "@mikro-orm/core";
 import { TenantScoped } from "../mixins/tenantScoped";
 import { SoftDeletable } from "../mixins/softDeletable";
 import { Model } from "../mixins/model";
-import {
-	Attachment,
-	AttachmentProperty,
-} from "@monorepo/mikro-orm-attachments";
+import { Attachment } from "@monorepo/mikro-orm-attachments";
+import { AttachmentProperty } from "../subscribers/attachmentSubscriber";
 
 @Entity()
 export class Project extends TenantScoped(SoftDeletable(Model)) {
 	@Property()
 	name!: string;
 
-	@AttachmentProperty()
+	@AttachmentProperty({ driver: "fs", variants: ["thumbnail"] })
 	avatar!: Attachment;
 }

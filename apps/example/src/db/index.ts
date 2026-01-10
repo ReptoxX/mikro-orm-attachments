@@ -1,19 +1,18 @@
 import { MikroORM, type Options } from "@mikro-orm/core";
 import { SqliteDriver } from "@mikro-orm/sqlite";
-import { SQL } from "bun";
-import { User } from "./entities/User";
-import { TenantSubscriber } from "./subscribers/tenantSubscriber";
-import { Project } from "./entities/Project";
+import { attachmentSubscriber } from "./subscribers/attachmentSubscriber";
 import { env } from "../config/env";
-import { AttachmentSubscriber } from "@monorepo/mikro-orm-attachments";
+import { TenantSubscriber } from "./subscribers/tenantSubscriber";
 
-const connection = new SQL();
+import { User } from "./entities/User";
+import { Project } from "./entities/Project";
+
 export const config: Options<SqliteDriver> = {
 	driver: SqliteDriver,
 	entities: [User, Project],
 	dbName: env.DATABASE_URL,
 	debug: false,
-	subscribers: [new TenantSubscriber(), new AttachmentSubscriber()],
+	subscribers: [new TenantSubscriber(), attachmentSubscriber],
 };
 
 export const orm = await MikroORM.init(config);

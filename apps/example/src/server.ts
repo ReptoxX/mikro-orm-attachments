@@ -47,8 +47,7 @@ const app = new Elysia()
 		},
 		{
 			query: type({
-				"includeDeleted?":
-					"string.numeric.parse | number |> 0 <= number <= 1",
+				"includeDeleted?": "string.numeric.parse | number |> 0 <= number <= 1",
 			}),
 
 			// query: z.object({
@@ -61,9 +60,7 @@ const app = new Elysia()
 		async ({ em, body }) => {
 			const project = em.create(Project, {
 				name: body.name,
-				avatar: body.avatar
-					? Attachment.fromFile(body.avatar)
-					: undefined,
+				avatar: Attachment.fromFile(body.avatar),
 			});
 			await em.persist(project).flush();
 			return Object.assign({}, project);
@@ -75,7 +72,7 @@ const app = new Elysia()
 			// }),
 			body: t.Object({
 				name: t.String(),
-				avatar: t.Optional(t.File()),
+				avatar: t.File(),
 			}),
 			type: "multipart/form-data",
 		}
@@ -92,6 +89,23 @@ const app = new Elysia()
 			project.softDelete();
 			await em.persist(project).flush();
 			return Object.assign({}, project);
+		},
+		{
+			params: type({ id: "string.numeric.parse | number" }),
+		}
+	)
+	.get(
+		"/project/:id/avatar",
+		async ({ em, params, set }) => {
+			const project = await em.findOne(Project, {
+				id: params.id,
+			});
+			if (!project) {
+				return status(404);
+			}
+
+			set.headers["content-type"] = project.avatar.getMimeType("thumbnail");
+			return project.avatar.getBytes("thumbnail");
 		},
 		{
 			params: type({ id: "string.numeric.parse | number" }),
@@ -119,6 +133,4 @@ const app = new Elysia()
 	)
 	.listen(3000);
 
-console.log(
-	`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
-);
+console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`);

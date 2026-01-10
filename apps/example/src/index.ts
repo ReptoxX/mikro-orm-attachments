@@ -6,5 +6,5 @@ if (process.env.NODE_ENV === "production" && cluster.isPrimary) {
 	for (let i = 0; i < os.availableParallelism(); i++) cluster.fork();
 } else {
 	await import("./server");
-	console.log(`Worker ${process.pid} started`);
+	// console.log(`Worker ${process.pid} started`);
 }

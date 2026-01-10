@@ -1,5 +1,5 @@
 {
-	"name": "test-elysia",
+	"name": "example",
 	"version": "1.0.50",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
@@ -18,6 +18,7 @@
 		"arktype": "^2.1.29",
 		"blurhash": "^2.0.5",
 		"elysia": "latest",
+		"flydrive": "^1.3.0",
 		"mikro-orm": "^6.6.2",
 		"reflect-metadata": "^0.2.2",
 		"sharp": "^0.34.5",
