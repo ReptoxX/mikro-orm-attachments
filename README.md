@@ -1,6 +1,6 @@
 # mikro-orm-attachments
 
-`mikro-orm-attachments` is a plugin for [MikroORM](https://mikro-orm.io/) that adds powerful, type-safe file and image attachment support to your entities. It supports variants (transforms, thumbnails, etc), blurhash, custom storage drivers (via [flydrive](https://github.com/Slynova-Org/flydrive)), and declarative attachment columns.
+`mikro-orm-attachments` is a plugin for [MikroORM](https://mikro-orm.io/) that adds powerful, type-safe file and image attachment support to your entities. It supports variants (transforms, thumbnails, etc), blurhash, custom storage drivers (via [flydrive](https://github.com/flydrive/core)), and declarative attachment columns.
 
 ---
 
@@ -134,10 +134,15 @@ Variants allow you to automatically create different versions of an attachment (
     }
   }
 })
-avatar!: Attachment;
+avatar!: Attachment<"thumbnail" | "webp">;
 ```
 
 The plugin will generate and persist all declared variants.
+Adding the variant names to the Attachment Generic Type gives you and your team better DX by adding the variants to all Attachment functions
+```ts
+console.log(project.avatar.url("thumbnail"))
+//                                  ^ -- typed, when added manually
+```
 
 You can also define global variants, that can be reused inside a single entity.
 
@@ -166,7 +171,7 @@ To now use this predefined variant, you'll have to add this to your entities con
 @AttachmentProperty({
 	variants: ["thumbnail"]
 })
-avatar!: Attachment;
+avatar!: Attachment<"thumbnail">;
 ```
 
 This will automatically apply the global defined rules to this field.
@@ -233,13 +238,16 @@ When adding a new attachment column:
 ## FAQ
 
 **Q: How do I upload files in HTTP requests?**
+
 A: Accept file uploads in your framework, parse as a buffer; pass to your entity's attachment property before persist.
 
 **Q: Can I use S3?**
+
 A: Yes! Configure an S3 driver in `drivers` with flydrive.
 
 **Q: Is it type-safe?**
-A: Yes! Variant names/types are inferred from your config.
+
+A: Yes! Variants are type-safe and can be passed through by typing the generic `Attachment` Type to provide better DX.
 
 ---
 

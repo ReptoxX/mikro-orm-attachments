@@ -11,7 +11,7 @@ import {
 import { AttachmentBase, ImageAttachment } from "./typings";
 import { SignedURLOptions } from "flydrive/types";
 
-export class Attachment {
+export class Attachment<Variants extends string = string> {
 	[ATTACHMENT_LOADED]: boolean = false;
 	[ATTACHMENT_FILE]?: File;
 	[ATTACHMENT_DISK]?: Disk;
@@ -97,24 +97,24 @@ export class Attachment {
 		return this.data?.drive ?? "";
 	}
 
-	async getBytes(variantName?: string) {
+	async getBytes(variantName?: Variants) {
 		this.#ensureLoaded();
 		const path = variantName ? this.#getVariant(variantName).path : this.data?.path ?? "";
 		return this.#disk.getBytes(path);
 	}
 
-	async getBuffer(variantName?: string) {
+	async getBuffer(variantName?: Variants) {
 		this.#ensureLoaded();
 		return Buffer.from(await this.getBytes(variantName));
 	}
 
-	async getStream(variantName?: string) {
+	async getStream(variantName?: Variants) {
 		this.#ensureLoaded();
 		const path = variantName ? this.#getVariant(variantName).path : this.data?.path ?? "";
 		return this.#disk.getStream(path);
 	}
 
-	getMimeType(variantName?: string) {
+	getMimeType(variantName?: Variants) {
 		this.#ensureLoaded();
 		const variant = variantName ? this.#getVariant(variantName) : this.data;
 		return variant?.mimeType ?? "";
