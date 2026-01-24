@@ -44,6 +44,8 @@ jobs:
 
       - name: Generate changelog and bump version
         run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           bunx standard-version --release-as ${{ inputs.version }}
         working-directory: ./packages/mikro-orm-attachments
 
