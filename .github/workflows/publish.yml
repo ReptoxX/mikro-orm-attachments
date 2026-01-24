@@ -1,0 +1,64 @@
+name: Publish to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version bump type (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: bun install
+        working-directory: ./packages/mikro-orm-attachments
+
+      - name: Generate changelog and bump version
+        run: |
+          bunx standard-version --release-as ${{ inputs.version }}
+        working-directory: ./packages/mikro-orm-attachments
+
+      - name: Build package
+        run: bun run build
+        working-directory: ./packages/mikro-orm-attachments
+
+      - name: Publish to npm
+        run: npm publish --access public
+        working-directory: ./packages/mikro-orm-attachments
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Push changes and tags
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git push --follow-tags

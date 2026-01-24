@@ -12,7 +12,7 @@
 		"@mikro-orm/core": "^6.6.2",
 		"@mikro-orm/postgresql": "^6.6.2",
 		"@mikro-orm/sqlite": "^6.6.2",
-		"@monorepo/mikro-orm-attachments": "workspace:*",
+		"mikro-orm-attachments": "workspace:*",
 		"arkenv": "^0.8.3",
 		"arkregex": "^0.0.5",
 		"arktype": "^2.1.29",
