@@ -45,5 +45,6 @@ export const attachmentSubscriber = new AttachmentSubscriber({
 		},
 	},
 	defaultDriver: "fs",
+	converters: [],
 });
 export const AttachmentProperty = attachmentSubscriber.AttachmentDecorator;

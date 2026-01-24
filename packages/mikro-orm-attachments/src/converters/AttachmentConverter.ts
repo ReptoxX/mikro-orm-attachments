@@ -6,11 +6,9 @@ import { AttachmentBase, AttachmentOptions, ImageAttachment, VariantSpec } from 
 import type { NormalizedAttachmentPropertyOptions } from "../typings";
 import { join } from "path";
 import { v7 } from "uuid";
-import { fileTypeFromBuffer, fileTypeFromFile } from "file-type";
+import { fileTypeFromBuffer } from "file-type";
 import { imageToBlurhash } from "../utils/helpers";
-import { ImageConverter } from "./ImageConverter";
 import type { DriverContract } from "flydrive/types";
-import { BlurhashOptions } from "../types/converter";
 
 export class AttachmentConverter<
 	TDrivers extends Record<string, DriverContract> = Record<string, DriverContract>,
