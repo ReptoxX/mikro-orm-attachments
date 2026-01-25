@@ -10,6 +10,6 @@ export class Project extends TenantScoped(SoftDeletable(Model)) {
 	@Property()
 	name!: string;
 
-	@AttachmentProperty({ driver: "fs", variants: ["thumbnail"] })
-	avatar!: Attachment;
+	@AttachmentProperty({ variants: ["thumbnail"] })
+	avatar!: Attachment<"thumbnail">;
 }

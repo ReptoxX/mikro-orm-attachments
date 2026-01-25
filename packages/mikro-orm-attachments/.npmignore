@@ -1,0 +1,9 @@
+src/
+node_modules/
+*.tsbuildinfo
+*.log
+.DS_Store
+tsconfig.json
+build.ts
+test.sqlite
+uploads/
