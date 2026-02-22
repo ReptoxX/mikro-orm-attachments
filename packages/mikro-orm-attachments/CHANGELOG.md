@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/reptoxx/mikro-orm-attachments/compare/mikro-orm-attachments@1.1.0...mikro-orm-attachments@1.2.0) (2026-02-22)
+
+
+### Features
+
+* attachment from url ([3cb835f](https://github.com/reptoxx/mikro-orm-attachments/commit/3cb835f660a98f027e0d677145a4285feae0b101))
+
 ## [1.1.0](https://github.com/reptoxx/mikro-orm-attachments/compare/mikro-orm-attachments@1.0.0...mikro-orm-attachments@1.1.0) (2026-01-25)
 
 
