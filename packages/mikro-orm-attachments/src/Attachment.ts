@@ -59,6 +59,21 @@ export class Attachment<Variants extends string = string> {
 		return att;
 	}
 
+	/**
+	 * Downloads a file from a URL and returns an Attachment object.
+	 *
+	 * @param url - The URL of the file to download.
+	 * @returns The Attachment object.
+	 * @throws An error if the file cannot be downloaded.
+	 */
+	static async fromUrl(url: string): Promise<Attachment> {
+		const response = await fetch(url);
+		const buffer = await response.arrayBuffer();
+		const file = new File([buffer], url.split("/").pop()!, { type: response.headers.get("content-type") ?? "" });
+		const att = new Attachment(file);
+		return att;
+	}
+
 	#getVariant(variantName: string) {
 		this.#ensureLoaded();
 		const variant = (this.data as ImageAttachment)?.variants.find((v) => v.name === variantName) ?? null;
