@@ -17,24 +17,6 @@ const app = new Elysia()
 			tenantId: 1,
 		});
 	})
-	// .use(auth)
-	.get("/users", ({ em }) => {
-		return em.findAll(User);
-	})
-	.post(
-		"/users",
-		async ({ em, body }) => {
-			const user = em.create(User, {
-				...body,
-				activeTenantId: em.getFilterParams("tenant")?.tenantId,
-			});
-			await em.persist(user).flush();
-			return Object.assign({}, user);
-		},
-		{
-			body: type({ name: "string", email: "string", password: "string" }),
-		}
-	)
 	.onError(({ error }) => {})
 	.get(
 		"/projects",
@@ -73,6 +55,28 @@ const app = new Elysia()
 			body: t.Object({
 				name: t.String(),
 				avatar: t.File(),
+			}),
+			type: "multipart/form-data",
+		}
+	)
+	.post(
+		"/projects/from-url",
+		async ({ em, body }) => {
+			const project = em.create(Project, {
+				name: body.name,
+				avatar: await Attachment.fromUrl(body.avatar),
+			});
+			await em.persist(project).flush();
+			return Object.assign({}, project);
+		},
+		{
+			// body: type({
+			// 	name: "string",
+			// 	avatar: "File",
+			// }),
+			body: t.Object({
+				name: t.String(),
+				avatar: t.String(),
 			}),
 			type: "multipart/form-data",
 		}
