@@ -26,7 +26,8 @@
 		"version:patch": "standard-version --release-as patch",
 		"version:minor": "standard-version --release-as minor",
 		"version:major": "standard-version --release-as major",
-		"version": "standard-version"
+		"version": "standard-version",
+		"copy:readme": "cp ../../README.md . && cp CHANGELOG.md ../../CHANGELOG.md"
 	},
 	"keywords": [
 		"mikro-orm",
