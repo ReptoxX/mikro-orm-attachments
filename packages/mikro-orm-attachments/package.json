@@ -1,25 +1,27 @@
 {
 	"name": "mikro-orm-attachments",
-	"version": "1.3.0",
 	"description": "Attachment handling for MikroORM with support for image processing, variants, and multiple storage drivers",
+	"version": "1.3.0",
 	"type": "module",
-	"main": "./dist/index.js",
-	"types": "./dist/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js",
-			"default": "./dist/index.js"
-		}
-	},
 	"files": [
 		"dist",
 		"README.md",
 		"CHANGELOG.md"
 	],
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./package.json": "./package.json"
+	},
 	"scripts": {
-		"build": "bun run build.ts",
-		"dev": "bun build --watch ./src/index.ts --outdir dist --format esm --target node --minify --sourcemap --external @mikro-orm/core --external @mikro-orm/decorators --external sharp --external blurhash --external flydrive --external file-type --external uuid --outfile dist/index.js",
+		"build": "bunup",
+		"dev": "bunup --watch",
 		"prepublishOnly": "bun run build",
 		"version:patch": "standard-version --release-as patch",
 		"version:minor": "standard-version --release-as minor",
@@ -49,10 +51,12 @@
 		"flydrive": "^1.3.0"
 	},
 	"devDependencies": {
-		"bun-types": "latest",
 		"@mikro-orm/core": "^6.6.3",
-		"typescript": "^5.0.0",
-		"standard-version": "^9.5.0"
+		"@typescript/native-preview": "^7.0.0-dev.20260224.1",
+		"bun-types": "latest",
+		"bunup": "^0.16.29",
+		"standard-version": "^9.5.0",
+		"typescript": "^5.0.0"
 	},
 	"dependencies": {
 		"file-type": "^21.3.0",
