@@ -1,8 +1,10 @@
-import { Property } from "@mikro-orm/core";
+import type { Property as PropertyType } from "@mikro-orm/decorators/legacy";
 import { AttachmentType } from "../DatabaseType";
 import { ALLOWED_PROPERTY_OPTIONS, AttachmentDecoratorProps, AttachmentPropertyOptionsFor, DEFAULT_ATTACHMENT_PROPERTY_OPTIONS } from "../typings";
 import { AttachmentSubscriber } from "../subscribers/AttachmentSubscriber";
+import { resolveModule } from "../utils/helpers";
 
+const { Property } = resolveModule<{ Property: typeof PropertyType }>(["@mikro-orm/decorators/legacy", "@mikro-orm/core"]);
 const ATTACHMENT_PROPS = Symbol("attachment:props");
 
 export function AttachmentDecorator<S extends AttachmentSubscriber<any, any>>(options: AttachmentDecoratorProps<S> = {}) {
