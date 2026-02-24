@@ -1,4 +1,4 @@
-import { EventArgs, EventSubscriber, FlushEventArgs } from "@mikro-orm/core";
+import type { EventArgs, FlushEventArgs } from "@mikro-orm/core";
 import { Disk } from "flydrive";
 import { Attachment } from "../Attachment";
 import { AttachmentConverter } from "../converters/AttachmentConverter";
@@ -6,6 +6,12 @@ import { createAttachmentDecorator, getAttachmentProps } from "../decorators/Att
 import { ATTACHMENT_DISK, ATTACHMENT_LOADED } from "../symbols";
 import { AttachmentOptions, AttachmentDecoratorProps, DEFAULT_ATTACHMENT_OPTIONS, VariantSelection, VariantSpec, AttachmentPropertyOptions } from "../typings";
 import { DriverContract } from "flydrive/types";
+
+interface EventSubscriber {
+	getSubscribedEvents(): string[];
+	onLoad(args: any): Promise<void>;
+	beforeFlush(args: any): Promise<void>;
+}
 
 export class AttachmentSubscriber<const TDrivers extends Record<string, DriverContract>, const TVariants extends Record<string, VariantSpec>>
 	implements EventSubscriber
@@ -23,8 +29,8 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 		return ["onLoad", "beforeFlush"];
 	}
 
-	async onLoad(args: EventArgs<any>): Promise<void> {
-		const entity = args.entity;
+	async onLoad(args: any): Promise<void> {
+		const { entity } = args as EventArgs<any>;
 		const props = getAttachmentProps<AttachmentSubscriber<TDrivers, TVariants>>(entity);
 		for (const prop of Object.keys(props)) {
 			const value = entity[prop];
@@ -47,8 +53,8 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 		return disk;
 	}
 
-	async beforeFlush(args: FlushEventArgs): Promise<void> {
-		const uow = args.uow;
+	async beforeFlush(args: any): Promise<void> {
+		const { uow } = args as FlushEventArgs;
 		const entities = new Set([...uow.getChangeSets().map((cs) => cs.entity), ...uow.getPersistStack()]);
 		for (const entity of entities) {
 			await this.#handleEntity(entity);

@@ -1,4 +1,4 @@
-import { PropertyOptions } from "@mikro-orm/core";
+import type { PropertyOptions } from "@mikro-orm/core";
 import type { DriverContract } from "flydrive/types";
 import { ImageConverter } from "./converters/ImageConverter";
 import { BlurhashOptions, Converter, ConverterOptions } from "./types/converter";
