@@ -53,6 +53,10 @@ jobs:
         run: bun run build
         working-directory: ./packages/mikro-orm-attachments
 
+      - name: Copy README.md and CHANGELOG.md
+        run: bun run copy:readme
+        working-directory: ./packages/mikro-orm-attachments
+
       - name: Publish to npm
         run: npm publish --access public
         working-directory: ./packages/mikro-orm-attachments
