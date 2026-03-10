@@ -1,8 +1,9 @@
 import type { PropertyOptions } from "@mikro-orm/core";
 import type { DriverContract } from "flydrive/types";
-import { ImageConverter } from "./converters/ImageConverter";
-import { BlurhashOptions, Converter, ConverterOptions } from "./types/converter";
-import { AttachmentSubscriber } from "./subscribers/AttachmentSubscriber";
+
+import { SharpConverter } from "./converters/SharpConverter";
+import type { AttachmentSubscriber } from "./subscribers/AttachmentSubscriber";
+import type { BlurhashOptions, Converter, ConverterOptions, ConvertMetadata } from "./types/converter";
 
 type StringKeyOf<T> = Extract<keyof T, string>;
 
@@ -16,7 +17,7 @@ export type VariantSelection<TVariants extends Record<string, VariantSpec>> =
 
 export interface AttachmentPropertyOptions<
 	TDrivers extends Record<string, DriverContract> = Record<string, DriverContract>,
-	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>
+	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>,
 > {
 	folder?: string;
 	blurhash?: boolean | BlurhashOptions;
@@ -28,7 +29,7 @@ export type AttachmentPropertyOptionsFor<S extends AttachmentSubscriber<any, any
 
 export type NormalizedAttachmentPropertyOptions<
 	TDrivers extends Record<string, DriverContract> = Record<string, DriverContract>,
-	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>
+	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>,
 > = Omit<AttachmentPropertyOptions<TDrivers, TVariants>, "variants"> & {
 	variants?: Record<string, VariantSpec>;
 };
@@ -41,11 +42,11 @@ export const DEFAULT_ATTACHMENT_PROPERTY_OPTIONS: AttachmentPropertyOptions = {
 
 export const DEFAULT_ATTACHMENT_OPTIONS: Omit<AttachmentOptions, "drivers" | "defaultDriver" | "variants"> = {
 	rename: true,
-	converters: [new ImageConverter()],
+	converters: [new SharpConverter()],
 };
 export interface AttachmentOptions<
 	TDrivers extends Record<string, DriverContract> = Record<string, DriverContract>,
-	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>
+	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>,
 > {
 	readonly drivers: TDrivers;
 	readonly defaultDriver: StringKeyOf<TDrivers>;
@@ -85,6 +86,7 @@ export interface AttachmentBase {
 	mimeType: string;
 	path: string;
 	originalName: string;
+	meta?: ConvertMetadata;
 	variants: Omit<AttachmentBase, "variants" | "originalName" | "drive">[];
 }
 export interface ImageAttachment extends AttachmentBase {

@@ -1,3 +1,3 @@
-export { AttachmentSubscriber } from "./subscribers/AttachmentSubscriber";
 export { Attachment } from "./Attachment";
-export type { AttachmentPropertyOptions, AttachmentOptions } from "./typings";
+export { AttachmentSubscriber } from "./subscribers/AttachmentSubscriber";
+export type { AttachmentDecoratorProps, AttachmentOptions, AttachmentPropertyOptions } from "./typings";

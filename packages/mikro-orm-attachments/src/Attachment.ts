@@ -1,15 +1,10 @@
-import { Disk } from "flydrive";
-import {
-	ATTACHMENT_DISK,
-	ATTACHMENT_FILE,
-	ATTACHMENT_FN_LOAD,
-	ATTACHMENT_FN_PROCESS,
-	ATTACHMENT_FN_SAVE,
-	ATTACHMENT_LOADED,
-	ATTACHMENT_OPTIONS,
-} from "./symbols";
-import { AttachmentBase, ImageAttachment } from "./typings";
-import { SignedURLOptions } from "flydrive/types";
+import { Buffer } from "node:buffer";
+import { writeFileSync } from "node:fs";
+import type { Disk } from "flydrive";
+import type { SignedURLOptions } from "flydrive/types";
+
+import { ATTACHMENT_DISK, ATTACHMENT_FILE, ATTACHMENT_FN_LOAD, ATTACHMENT_FN_PROCESS, ATTACHMENT_FN_SAVE, ATTACHMENT_LOADED, ATTACHMENT_OPTIONS } from "./symbols";
+import type { AttachmentBase, ImageAttachment } from "./typings";
 
 export class Attachment<Variants extends string = string> {
 	[ATTACHMENT_LOADED]: boolean = false;
@@ -68,8 +63,28 @@ export class Attachment<Variants extends string = string> {
 	 */
 	static async fromUrl(url: string): Promise<Attachment> {
 		const response = await fetch(url);
-		const buffer = await response.arrayBuffer();
-		const file = new File([buffer], url.split("/").pop()!, { type: response.headers.get("content-type") ?? "" });
+		const arrayBuffer = await response.arrayBuffer();
+		let filename: string | undefined;
+
+		// Try to obtain filename from Content-Disposition header
+		const contentDisposition = response.headers.get("content-disposition");
+		if (contentDisposition) {
+			const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i);
+			if (filenameMatch) {
+				filename = filenameMatch[1].replace(/['"]/g, "");
+			}
+		}
+
+		// Fallback to last segment of URL if no filename found
+		if (!filename) {
+			const urlParts = url.split("?");
+			const pathParts = urlParts[0].split("/");
+			filename = pathParts.pop() || "download";
+		}
+
+		const buffer = Buffer.from(arrayBuffer);
+
+		const file = new File([buffer], filename, { type: response.headers.get("content-type") ?? "" });
 		const att = new Attachment(file);
 		return att;
 	}
@@ -83,12 +98,30 @@ export class Attachment<Variants extends string = string> {
 		return variant;
 	}
 
-	url(variant?: string) {
+	url(variant?: Variants) {
 		this.#ensureLoaded();
 		if (variant) {
 			return this.#disk.getUrl(this.#getVariant(variant).path);
 		}
 		return (this.data as ImageAttachment)?.url;
+	}
+
+	originalName() {
+		return this.data?.originalName ?? "";
+	}
+
+	size(variant?: Variants) {
+		if (variant) {
+			return this.#getVariant(variant).size;
+		}
+		return this.data?.size;
+	}
+
+	meta(variant?: Variants) {
+		if (variant) {
+			return this.#getVariant(variant).meta;
+		}
+		return this.data?.meta;
 	}
 
 	preSignedUrl(variantNameOrOptions?: string | SignedURLOptions, signedUrlOptions?: SignedURLOptions) {
@@ -114,7 +147,7 @@ export class Attachment<Variants extends string = string> {
 
 	async getBytes(variantName?: Variants) {
 		this.#ensureLoaded();
-		const path = variantName ? this.#getVariant(variantName).path : this.data?.path ?? "";
+		const path = variantName ? this.#getVariant(variantName).path : (this.data?.path ?? "");
 		return this.#disk.getBytes(path);
 	}
 
@@ -125,7 +158,7 @@ export class Attachment<Variants extends string = string> {
 
 	async getStream(variantName?: Variants) {
 		this.#ensureLoaded();
-		const path = variantName ? this.#getVariant(variantName).path : this.data?.path ?? "";
+		const path = variantName ? this.#getVariant(variantName).path : (this.data?.path ?? "");
 		return this.#disk.getStream(path);
 	}
 

@@ -1,10 +1,23 @@
 import { fileTypeFromBuffer } from "file-type";
-import { Converter, ConverterOptions, ConvertInput, ConvertOutput, ImageConverterOptions } from "../types/converter";
+
+import type { Converter, ConverterOptions, ConvertInput, ConvertMetadata, ConvertOutput, ImageConverterOptions } from "../types/converter";
 import { use } from "../utils/helpers";
 
-export class ImageConverter implements Converter {
-	async supports(input: ConvertInput, options: ConverterOptions): Promise<boolean> {
+export class SharpConverter implements Converter {
+	async supports(input: ConvertInput, _options: ConverterOptions): Promise<boolean> {
 		return input.mimeType.startsWith("image/");
+	}
+
+	async metadata(input: ConvertInput, _options: ConverterOptions): Promise<ConvertMetadata> {
+		const sharp = await use("sharp");
+		const image = sharp(input.buffer);
+		const metadata = await image.metadata();
+		return {
+			dimension: {
+				width: metadata.width,
+				height: metadata.height,
+			},
+		};
 	}
 
 	async handle(input: ConvertInput, options?: ImageConverterOptions): Promise<ConvertOutput> {

@@ -1,11 +1,20 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: MikroORM uses any */
 import type { EventArgs, FlushEventArgs } from "@mikro-orm/core";
 import { Disk } from "flydrive";
+import type { DriverContract } from "flydrive/types";
+
 import { Attachment } from "../Attachment";
-import { AttachmentConverter } from "../converters/AttachmentConverter";
+import { AttachmentConverter } from "../AttachmentConverter";
 import { createAttachmentDecorator, getAttachmentProps } from "../decorators/AttachmentDecorator";
 import { ATTACHMENT_DISK, ATTACHMENT_LOADED } from "../symbols";
-import { AttachmentOptions, AttachmentDecoratorProps, DEFAULT_ATTACHMENT_OPTIONS, VariantSelection, VariantSpec, AttachmentPropertyOptions } from "../typings";
-import { DriverContract } from "flydrive/types";
+import {
+	type AttachmentDecoratorProps,
+	type AttachmentOptions,
+	type AttachmentPropertyOptions,
+	DEFAULT_ATTACHMENT_OPTIONS,
+	type VariantSelection,
+	type VariantSpec,
+} from "../typings";
 
 interface EventSubscriber {
 	getSubscribedEvents(): string[];
@@ -13,9 +22,7 @@ interface EventSubscriber {
 	beforeFlush(args: any): Promise<void>;
 }
 
-export class AttachmentSubscriber<const TDrivers extends Record<string, DriverContract>, const TVariants extends Record<string, VariantSpec>>
-	implements EventSubscriber
-{
+export class AttachmentSubscriber<const TDrivers extends Record<string, DriverContract>, const TVariants extends Record<string, VariantSpec>> implements EventSubscriber {
 	private readonly disks: Map<Extract<keyof TDrivers, string>, Disk>;
 	constructor(private readonly options: AttachmentOptions<TDrivers, TVariants>) {
 		this.options = {

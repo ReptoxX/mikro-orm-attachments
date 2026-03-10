@@ -1,7 +1,8 @@
-import { VariantSpec } from "../typings";
+import type { VariantSpec } from "../typings";
 
 export interface Converter {
 	supports(input: ConvertInput, options: ConverterOptions): Promise<boolean>;
+	metadata(input: ConvertInput, options: ConverterOptions): Promise<ConvertMetadata>;
 	handle(input: ConvertInput, options: ConverterOptions): Promise<ConvertOutput>;
 }
 
@@ -17,8 +18,8 @@ export interface ConvertInput {
 	buffer: Buffer;
 	size: number;
 	mimeType: string;
-	variantName: string;
-	variant: VariantSpec;
+	variantName?: string;
+	variant?: VariantSpec;
 	extname: string;
 }
 
@@ -142,9 +143,16 @@ export type ConverterOptions = {
 				withoutReduction?: boolean;
 				fastShrinkOnLoad?: boolean;
 		  };
-	format?: "jpeg" | "jpg" | "png" | "gif" | "webp" | "avif" | "heif" | "tiff" | "raw" | jpeg | png | gif | webp | avif | heif;
+	format?: "jpeg" | "jpg" | "png" | "gif" | "webp" | "avif" | "tiff" | "raw" | jpeg | png | gif | webp | avif;
 	autoOrient?: boolean;
 	blurhash?: boolean | BlurhashOptions;
 	startTime?: number;
 	startPage?: number;
 };
+
+export interface ConvertMetadata {
+	dimension: {
+		width: number;
+		height: number;
+	};
+}
