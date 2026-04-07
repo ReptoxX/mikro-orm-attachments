@@ -1,7 +1,9 @@
-import { Type } from "@mikro-orm/core";
-import { ATTACHMENT_FN_LOAD, ATTACHMENT_FN_SAVE } from "./symbols";
+/** biome-ignore-all lint/suspicious/noExplicitAny: entity comes from mikro-orm and there it's set to any */
+import { Type, ValidationError } from "@mikro-orm/core";
+
 import { Attachment } from "./Attachment";
-import { AttachmentPropertyOptions } from "./typings";
+import { ATTACHMENT_FN_LOAD, ATTACHMENT_FN_SAVE } from "./symbols";
+import type { AttachmentPropertyOptions } from "./typings";
 
 export class AttachmentType extends Type<Attachment, string> {
 	private readonly options: AttachmentPropertyOptions = {
@@ -18,17 +20,21 @@ export class AttachmentType extends Type<Attachment, string> {
 	}
 
 	convertToDatabaseValue(value: Attachment): any {
-		return value[ATTACHMENT_FN_SAVE]();
+		if (value === null) return null;
+		if (value instanceof Attachment) {
+			return value[ATTACHMENT_FN_SAVE]();
+		}
+		return value;
 	}
 
 	convertToJSValue(value: any): Attachment {
 		try {
 			return Attachment[ATTACHMENT_FN_LOAD](JSON.parse(value));
-		} catch (error) {
+		} catch (_error) {
 			try {
 				return Attachment[ATTACHMENT_FN_LOAD](value);
-			} catch (e) {
-				throw new Error("Invalid attachment data");
+			} catch (_e) {
+				throw ValidationError.invalidType(AttachmentType, value, "database");
 			}
 		}
 	}

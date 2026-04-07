@@ -1,30 +1,37 @@
 import { fileTypeFromBuffer } from "file-type";
+import type * as Sharp from "sharp";
 
-import type { Converter, ConverterOptions, ConvertInput, ConvertMetadata, ConvertOutput, ImageConverterOptions } from "../types/converter";
+import type { ConvertInput, ConvertOutput } from "../types/converter";
 import { use } from "../utils/helpers";
+import { BaseConverter } from "./BaseConverter";
 
-export class SharpConverter implements Converter {
-	async supports(input: ConvertInput, _options: ConverterOptions): Promise<boolean> {
+type SharpFormat = "jpg" | "jpeg" | "png" | "webp" | "avif" | "gif" | "tiff" | "heic" | "heif";
+
+interface SharpConverterOptions {
+	resize?: Sharp.ResizeOptions;
+	autoOrient?: boolean;
+	format?:
+		| SharpFormat
+		| {
+				format: SharpFormat;
+				options: Sharp.PngOptions | Sharp.JpegOptions | Sharp.WebpOptions | Sharp.AvifOptions | Sharp.GifOptions | Sharp.TiffOptions | Sharp.HeifOptions;
+		  };
+}
+
+export class SharpConverter extends BaseConverter<ConvertInput, ConvertOutput> {
+	constructor(private readonly options?: SharpConverterOptions) {
+		super();
+	}
+
+	async supports(input: ConvertInput): Promise<boolean> {
 		return input.mimeType.startsWith("image/");
 	}
 
-	async metadata(input: ConvertInput, _options: ConverterOptions): Promise<ConvertMetadata> {
+	async handle(input: ConvertInput): Promise<ConvertOutput> {
 		const sharp = await use("sharp");
-		const image = sharp(input.buffer);
-		const metadata = await image.metadata();
-		return {
-			dimension: {
-				width: metadata.width,
-				height: metadata.height,
-			},
-		};
-	}
-
-	async handle(input: ConvertInput, options?: ImageConverterOptions): Promise<ConvertOutput> {
-		const sharp = await use("sharp");
-		const resize = options?.resize || {};
-		let format = options?.format || "webp";
-		const autoOrient = options?.autoOrient || true;
+		const resize = this.options?.resize || {};
+		let format = this.options?.format || "webp";
+		const autoOrient = this.options?.autoOrient || true;
 		let formatOptions: unknown = {};
 
 		if (typeof format !== "string") {

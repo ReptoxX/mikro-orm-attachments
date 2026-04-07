@@ -1,9 +1,8 @@
 import { Buffer } from "node:buffer";
-import { writeFileSync } from "node:fs";
 import type { Disk } from "flydrive";
 import type { SignedURLOptions } from "flydrive/types";
 
-import { ATTACHMENT_DISK, ATTACHMENT_FILE, ATTACHMENT_FN_LOAD, ATTACHMENT_FN_PROCESS, ATTACHMENT_FN_SAVE, ATTACHMENT_LOADED, ATTACHMENT_OPTIONS } from "./symbols";
+import { ATTACHMENT_DISK, ATTACHMENT_FILE, ATTACHMENT_FN_LOAD, ATTACHMENT_FN_PROCESS, ATTACHMENT_FN_SAVE, ATTACHMENT_LOADED } from "./symbols";
 import type { AttachmentBase, ImageAttachment } from "./typings";
 
 export class Attachment<Variants extends string = string> {
@@ -26,9 +25,10 @@ export class Attachment<Variants extends string = string> {
 			throw new Error("Attachment is not processed, please flush the entity first.");
 		}
 	}
+
 	get #disk() {
 		this.#ensureLoaded();
-		return this[ATTACHMENT_DISK]!;
+		return this[ATTACHMENT_DISK];
 	}
 
 	// Internal functions
@@ -101,7 +101,7 @@ export class Attachment<Variants extends string = string> {
 	url(variant?: Variants) {
 		this.#ensureLoaded();
 		if (variant) {
-			return this.#disk.getUrl(this.#getVariant(variant).path);
+			return this.#disk?.getUrl(this.#getVariant(variant).path);
 		}
 		return (this.data as ImageAttachment)?.url;
 	}
@@ -127,9 +127,9 @@ export class Attachment<Variants extends string = string> {
 	preSignedUrl(variantNameOrOptions?: string | SignedURLOptions, signedUrlOptions?: SignedURLOptions) {
 		this.#ensureLoaded();
 		if (typeof variantNameOrOptions === "string") {
-			return this.#disk.getSignedUrl(this.#getVariant(variantNameOrOptions).path, signedUrlOptions);
+			return this.#disk?.getSignedUrl(this.#getVariant(variantNameOrOptions).path, signedUrlOptions);
 		}
-		return this.#disk.getSignedUrl(this.data?.path ?? "", signedUrlOptions);
+		return this.#disk?.getSignedUrl(this.data?.path ?? "", signedUrlOptions);
 	}
 
 	blurhash() {
@@ -148,18 +148,22 @@ export class Attachment<Variants extends string = string> {
 	async getBytes(variantName?: Variants) {
 		this.#ensureLoaded();
 		const path = variantName ? this.#getVariant(variantName).path : (this.data?.path ?? "");
-		return this.#disk.getBytes(path);
+		return this.#disk?.getBytes(path);
 	}
 
 	async getBuffer(variantName?: Variants) {
 		this.#ensureLoaded();
-		return Buffer.from(await this.getBytes(variantName));
+		const bytes = await this.getBytes(variantName);
+		if (!bytes) {
+			return null;
+		}
+		return Buffer.from(bytes);
 	}
 
 	async getStream(variantName?: Variants) {
 		this.#ensureLoaded();
 		const path = variantName ? this.#getVariant(variantName).path : (this.data?.path ?? "");
-		return this.#disk.getStream(path);
+		return this.#disk?.getStream(path);
 	}
 
 	getMimeType(variantName?: Variants) {

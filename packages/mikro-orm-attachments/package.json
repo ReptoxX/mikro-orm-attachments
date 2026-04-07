@@ -23,11 +23,29 @@
 				"default": "./dist/converters/SharpConverter.js"
 			}
 		},
+		"./converters/BaseConverter": {
+			"import": "./dist/converters/BaseConverter.js"
+		},
 		"./converters/ImgkitConverter": {
 			"import": {
 				"types": "./dist/converters/ImgkitConverter.d.ts",
 				"default": "./dist/converters/ImgkitConverter.js"
 			}
+		},
+		"./metadata/ImgkitMetadata": {
+			"import": {
+				"types": "./dist/metadata/ImgkitMetadata.d.ts",
+				"default": "./dist/metadata/ImgkitMetadata.js"
+			}
+		},
+		"./metadata/BaseMetadata": {
+			"import": {
+				"types": "./dist/metadata/BaseMetadata.d.ts",
+				"default": "./dist/metadata/BaseMetadata.js"
+			}
+		},
+		"./metadata/SharpMetadata": {
+			"import": "./dist/metadata/SharpMetadata.js"
 		},
 		"./package.json": "./package.json"
 	},
@@ -55,25 +73,25 @@
 		"url": "https://github.com/reptoxx/mikro-orm-attachments"
 	},
 	"optionalDependencies": {
-		"@mikro-orm/decorators": "^7.0.0 || ^7.0.0-rc.1 || ^7.0.0-rc.2 || 7.0.0-rc.3"
+		"@mikro-orm/decorators": "^7.0.9"
 	},
 	"peerDependencies": {
-		"@mikro-orm/core": "^6.6.3 || ^7.0.0 || ^7.0.0-rc.1 || ^7.0.0-rc.2 || 7.0.0-rc.3",
+		"@mikro-orm/core": "^7.0.9",
 		"sharp": "^0.34.5",
 		"blurhash": "^2.0.5",
-		"flydrive": "^2.0.0"
+		"flydrive": "^2.1.0"
 	},
 	"devDependencies": {
-		"@mikro-orm/core": "^7.0.0-rc.3",
-		"@typescript/native-preview": "^7.0.0-dev.20260224.1",
-		"bun-types": "latest",
-		"bunup": "^0.16.29",
-		"imgkit": "^2.2.0",
+		"@mikro-orm/core": "^7.0.9",
+		"@typescript/native-preview": "^7.0.0-dev.20260407.1",
+		"bun-types": "1.3.11",
+		"bunup": "^0.16.31",
+		"imgkit": "^2.2.1",
 		"standard-version": "^9.5.0",
-		"typescript": "^5.0.0"
+		"typescript": "^6.0.2"
 	},
 	"dependencies": {
-		"file-type": "^21.3.0",
+		"file-type": "^21.3.4",
 		"uuid": "^13.0.0"
 	},
 	"engines": {

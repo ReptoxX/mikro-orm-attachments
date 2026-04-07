@@ -1,10 +1,11 @@
-import { join } from "path";
+import { join } from "node:path";
 import { fileTypeFromBuffer } from "file-type";
 import type { Disk } from "flydrive";
 import type { DriverContract } from "flydrive/types";
 import { v7 } from "uuid";
 
 import type { Attachment } from "./Attachment";
+import { BaseConverter } from "./converters/BaseConverter";
 import { ATTACHMENT_FILE, ATTACHMENT_FN_PROCESS, ATTACHMENT_LOADED } from "./symbols";
 import type { AttachmentConverterProps } from "./types/attachment";
 import type { AttachmentBase, AttachmentOptions, ImageAttachment, NormalizedAttachmentPropertyOptions, VariantSpec } from "./typings";
@@ -111,21 +112,21 @@ export class AttachmentConverter<
 		await this.disk.put(key, buffer);
 	}
 
-	async pickConverter() {
+	async pickConverter(variantName: string, converter?: VariantSpec) {
 		if (!this.fileInfo) {
 			throw new Error("Attachment Converter: File info not found");
 		}
-		for (const converter of this.config.converters ?? []) {
+		if (this.config.variants?.[variantName]) {
+			converter = this.config.variants[variantName];
+		}
+		if (converter instanceof BaseConverter) {
 			if (
-				await converter.supports(
-					{
-						size: this.fileInfo.size,
-						mimeType: this.fileInfo.mimeType,
-						buffer: await this.fileToBuffer(),
-						extname: this.fileInfo.extname,
-					},
-					this.modelOptions,
-				)
+				await converter.supports({
+					size: this.fileInfo.size,
+					mimeType: this.fileInfo.mimeType,
+					buffer: await this.fileToBuffer(),
+					extname: this.fileInfo.extname,
+				})
 			) {
 				return converter;
 			}
@@ -154,38 +155,28 @@ export class AttachmentConverter<
 			originalName: this.file.name,
 			variants: [],
 		};
-		const converter = await this.pickConverter();
-		if (!converter) {
-			throw new Error(`Attachment Converter: No converter for the file type ${this.fileInfo?.mimeType} found`);
-		}
-
-		const metadata = await converter.metadata(
-			{
-				buffer,
-				size: this.fileInfo?.size ?? 0,
-				mimeType: this.fileInfo?.mimeType ?? "",
-				extname: this.fileInfo?.extname ?? "",
-			},
-			this.modelOptions,
-		);
-
-		if (metadata) {
-			data.meta = metadata;
-		}
+		const metadata = await this.config.metadata?.metadata({
+			buffer,
+			size: this.fileInfo?.size ?? 0,
+			mimeType: this.fileInfo?.mimeType ?? "",
+			extname: this.fileInfo?.extname ?? "",
+		});
+		data.meta = metadata;
 
 		if (this.modelOptions.variants) {
 			for (const [variantName, variant] of Object.entries(this.modelOptions.variants)) {
-				const converterOutput = await converter.handle(
-					{
-						buffer,
-						size: this.fileInfo?.size ?? 0,
-						mimeType: this.fileInfo?.mimeType ?? "",
-						extname: this.fileInfo?.extname ?? "",
-						variantName,
-						variant,
-					},
-					this.modelOptions.variants[variantName],
-				);
+				const converter = await this.pickConverter(variantName, variant);
+				if (!converter) {
+					throw new Error(`Attachment Converter: No converter for the variant ${variantName} found`);
+				}
+				const converterOutput = await converter.handle({
+					buffer,
+					size: this.fileInfo?.size ?? 0,
+					mimeType: this.fileInfo?.mimeType ?? "",
+					extname: this.fileInfo?.extname ?? "",
+					variantName,
+					variant,
+				});
 				// biome-ignore lint/style/noNonNullAssertion: originalKey is guaranteed to be non-null
 				const variantKey = this.generateKey(originalKey.split("/").pop()!.split(".").shift()!, `${variantName}.${converterOutput.extname}`);
 				await this.uploadFile(variantKey, converterOutput.buffer);

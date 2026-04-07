@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: MikroORM uses any */
-import type { EventArgs, FlushEventArgs } from "@mikro-orm/core";
+import type { EventArgs, FlushEventArgs, TransactionEventArgs } from "@mikro-orm/core";
 import { Disk } from "flydrive";
 import type { DriverContract } from "flydrive/types";
 
@@ -32,10 +32,6 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 		this.disks = new Map(Object.entries(this.options.drivers).map(([key, driver]) => [key as Extract<keyof TDrivers, string>, new Disk(driver)]));
 	}
 
-	getSubscribedEvents(): string[] {
-		return ["onLoad", "beforeFlush"];
-	}
-
 	async onLoad(args: any): Promise<void> {
 		const { entity } = args as EventArgs<any>;
 		const props = getAttachmentProps<AttachmentSubscriber<TDrivers, TVariants>>(entity);
@@ -43,19 +39,25 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 			const value = entity[prop];
 			const config = props[prop];
 			if (value instanceof Attachment) {
-				const disk = this.#getDisk(config, value.getDrive() as Extract<keyof TDrivers, string>);
+				const disk = this.#getDisk(config, value.getDrive() as Extract<keyof TDrivers, string>, false);
+				if (!disk) {
+					continue;
+				}
 				value[ATTACHMENT_DISK] = disk;
 			}
 		}
 	}
 
-	#getDisk(config: AttachmentPropertyOptions<TDrivers, TVariants>, dbDriver?: Extract<keyof TDrivers, string>): Disk {
+	#getDisk(config: AttachmentPropertyOptions<TDrivers, TVariants>, dbDriver?: Extract<keyof TDrivers, string>, throwError?: boolean): Disk | null {
 		let disk = this.disks.get(dbDriver ?? config.driver ?? this.options.defaultDriver);
 		if (dbDriver && !disk) {
 			disk = this.disks.get(config.driver ?? this.options.defaultDriver);
 		}
 		if (!disk) {
-			throw new Error(`Unknown attachment driver "${String(dbDriver ?? config.driver ?? this.options.defaultDriver)}"`);
+			if (throwError) {
+				throw new Error(`Unknown attachment driver "${String(dbDriver ?? config.driver ?? this.options.defaultDriver)}"`);
+			}
+			return null;
 		}
 		return disk;
 	}
@@ -78,6 +80,9 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 					continue;
 				}
 				const disk = this.#getDisk(config);
+				if (!disk) {
+					continue;
+				}
 				value[ATTACHMENT_DISK] = disk;
 				const variants = this.#normalizeVariants(config.variants);
 				const converter = new AttachmentConverter(value, {
