@@ -1,8 +1,11 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: entity comes from mikro-orm and there it's set to any */
 import type { PropertyOptions } from "@mikro-orm/core";
 import type { DriverContract } from "flydrive/types";
-import { ImageConverter } from "./converters/ImageConverter";
-import { BlurhashOptions, Converter, ConverterOptions } from "./types/converter";
-import { AttachmentSubscriber } from "./subscribers/AttachmentSubscriber";
+
+import type { BaseConverter } from "./converters/BaseConverter";
+import type { BaseMetadata } from "./metadata/BaseMetadata";
+import type { AttachmentSubscriber } from "./subscribers/AttachmentSubscriber";
+import type { BlurhashOptions, ConvertInput, ConvertMetadata, ConvertOutput } from "./types/converter";
 
 type StringKeyOf<T> = Extract<keyof T, string>;
 
@@ -16,7 +19,7 @@ export type VariantSelection<TVariants extends Record<string, VariantSpec>> =
 
 export interface AttachmentPropertyOptions<
 	TDrivers extends Record<string, DriverContract> = Record<string, DriverContract>,
-	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>
+	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>,
 > {
 	folder?: string;
 	blurhash?: boolean | BlurhashOptions;
@@ -28,7 +31,7 @@ export type AttachmentPropertyOptionsFor<S extends AttachmentSubscriber<any, any
 
 export type NormalizedAttachmentPropertyOptions<
 	TDrivers extends Record<string, DriverContract> = Record<string, DriverContract>,
-	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>
+	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>,
 > = Omit<AttachmentPropertyOptions<TDrivers, TVariants>, "variants"> & {
 	variants?: Record<string, VariantSpec>;
 };
@@ -41,17 +44,17 @@ export const DEFAULT_ATTACHMENT_PROPERTY_OPTIONS: AttachmentPropertyOptions = {
 
 export const DEFAULT_ATTACHMENT_OPTIONS: Omit<AttachmentOptions, "drivers" | "defaultDriver" | "variants"> = {
 	rename: true,
-	converters: [new ImageConverter()],
 };
 export interface AttachmentOptions<
 	TDrivers extends Record<string, DriverContract> = Record<string, DriverContract>,
-	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>
+	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>,
+	TMetadata extends BaseMetadata<any> = BaseMetadata<any>,
 > {
 	readonly drivers: TDrivers;
 	readonly defaultDriver: StringKeyOf<TDrivers>;
 	readonly rename?: boolean | ((file: File, columnName: string, entity: any) => string);
-	readonly converters?: Converter[];
 	readonly variants?: TVariants;
+	readonly metadata?: TMetadata;
 }
 
 export const ALLOWED_PROPERTY_OPTIONS = [
@@ -85,6 +88,7 @@ export interface AttachmentBase {
 	mimeType: string;
 	path: string;
 	originalName: string;
+	meta?: ConvertMetadata;
 	variants: Omit<AttachmentBase, "variants" | "originalName" | "drive">[];
 }
 export interface ImageAttachment extends AttachmentBase {
@@ -92,22 +96,12 @@ export interface ImageAttachment extends AttachmentBase {
 	meta: {
 		date?: string;
 		host?: string;
-		dimension: {
-			width: number;
-			height: number;
-		};
-		gps?: {
-			latitude?: number;
-			longitude?: number;
-			altitude?: number;
-		};
-		orientation?: {
-			value: number;
-			description?: string;
-		};
+		dimension: { width: number; height: number };
+		gps?: { latitude?: number; longitude?: number; altitude?: number };
+		orientation?: { value: number; description?: string };
 	};
 	path: string;
 	url: string;
 }
 
-export interface VariantSpec extends ConverterOptions {}
+export type VariantSpec = BaseConverter<ConvertInput, ConvertOutput>;

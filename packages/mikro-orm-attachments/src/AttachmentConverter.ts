@@ -1,26 +1,26 @@
-import { Disk } from "flydrive";
-import { Attachment } from "../Attachment";
-import { ATTACHMENT_FILE, ATTACHMENT_FN_PROCESS, ATTACHMENT_LOADED } from "../symbols";
-import { AttachmentConverterProps } from "../types/attachment";
-import { AttachmentBase, AttachmentOptions, ImageAttachment, VariantSpec } from "../typings";
-import type { NormalizedAttachmentPropertyOptions } from "../typings";
-import { join } from "path";
-import { v7 } from "uuid";
-import { fileTypeFromBuffer, fileTypeFromFile } from "file-type";
-import { imageToBlurhash } from "../utils/helpers";
-import { ImageConverter } from "./ImageConverter";
+import { join } from "node:path";
+import { fileTypeFromBuffer } from "file-type";
+import type { Disk } from "flydrive";
 import type { DriverContract } from "flydrive/types";
-import { BlurhashOptions } from "../types/converter";
+import { v7 } from "uuid";
+
+import type { Attachment } from "./Attachment";
+import { BaseConverter } from "./converters/BaseConverter";
+import { ATTACHMENT_FILE, ATTACHMENT_FN_PROCESS, ATTACHMENT_LOADED } from "./symbols";
+import type { AttachmentConverterProps } from "./types/attachment";
+import type { AttachmentBase, AttachmentOptions, ImageAttachment, NormalizedAttachmentPropertyOptions, VariantSpec } from "./typings";
+import { imageToBlurhash } from "./utils/helpers";
 
 export class AttachmentConverter<
 	TDrivers extends Record<string, DriverContract> = Record<string, DriverContract>,
-	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>
+	TVariants extends Record<string, VariantSpec> = Record<string, VariantSpec>,
 > {
 	private readonly file: File;
 	private readonly disk: Disk;
 	private buffer?: Buffer;
 	private readonly modelOptions: NormalizedAttachmentPropertyOptions<TDrivers, TVariants>;
 	private readonly config: AttachmentOptions<TDrivers, TVariants>;
+	// biome-ignore lint/suspicious/noExplicitAny: entity comes from mikro-orm and there it's set to any
 	private readonly entity: any;
 	private readonly columnName: string;
 	private readonly diskName: string;
@@ -30,7 +30,10 @@ export class AttachmentConverter<
 		size: number;
 	};
 
-	constructor(private readonly att: Attachment, props: AttachmentConverterProps<TDrivers, TVariants>) {
+	constructor(
+		private readonly att: Attachment,
+		props: AttachmentConverterProps<TDrivers, TVariants>,
+	) {
 		const { disk, options, config, entity, columnName, diskName } = props;
 		this.disk = disk;
 		this.modelOptions = options;
@@ -42,6 +45,7 @@ export class AttachmentConverter<
 		if (att[ATTACHMENT_LOADED]) {
 			throw new Error("Attachment already processed, please use the Attachment.fromFile method to create a new attachment");
 		}
+		// biome-ignore lint/style/noNonNullAssertion: file is guaranteed to be non-null
 		this.file = this.att[ATTACHMENT_FILE]!;
 	}
 
@@ -51,12 +55,12 @@ export class AttachmentConverter<
 
 	generateKey(name: string, ...path: string[]) {
 		let folder = this.modelOptions.folder ?? "";
-		folder = folder.replace(/:([A-Za-z0-9_]+)/g, (full, key: string) => {
-			let value = this.entity[key];
+		folder = folder.replace(/:([A-Za-z0-9_]+)/g, (_full, key: string) => {
+			const value = this.entity[key];
 
 			if (value === undefined || value === null) {
 				throw new Error(
-					`Missing value for Attachment path "${key}" in entity ${this.entity.constructor.name}. Please ensure that the referenced property is computed before the attachment is processed. (Auto incrementing fields are not supported.)`
+					`Missing value for Attachment path "${key}" in entity ${this.entity.constructor.name}. Please ensure that the referenced property is computed before the attachment is processed. (Auto incrementing fields are not supported.)`,
 				);
 			}
 
@@ -108,23 +112,21 @@ export class AttachmentConverter<
 		await this.disk.put(key, buffer);
 	}
 
-	async pickConverter(variantName: string, variant: VariantSpec) {
+	async pickConverter(variantName: string, converter?: VariantSpec) {
 		if (!this.fileInfo) {
 			throw new Error("Attachment Converter: File info not found");
 		}
-		for (const converter of this.config.converters ?? []) {
+		if (this.config.variants?.[variantName]) {
+			converter = this.config.variants[variantName];
+		}
+		if (converter instanceof BaseConverter) {
 			if (
-				await converter.supports(
-					{
-						size: this.fileInfo.size,
-						mimeType: this.fileInfo.mimeType,
-						variantName,
-						variant,
-						buffer: await this.fileToBuffer(),
-						extname: this.fileInfo.extname,
-					},
-					this.modelOptions
-				)
+				await converter.supports({
+					size: this.fileInfo.size,
+					mimeType: this.fileInfo.mimeType,
+					buffer: await this.fileToBuffer(),
+					extname: this.fileInfo.extname,
+				})
 			) {
 				return converter;
 			}
@@ -153,32 +155,38 @@ export class AttachmentConverter<
 			originalName: this.file.name,
 			variants: [],
 		};
+		const metadata = await this.config.metadata?.metadata({
+			buffer,
+			size: this.fileInfo?.size ?? 0,
+			mimeType: this.fileInfo?.mimeType ?? "",
+			extname: this.fileInfo?.extname ?? "",
+		});
+		data.meta = metadata;
 
 		if (this.modelOptions.variants) {
 			for (const [variantName, variant] of Object.entries(this.modelOptions.variants)) {
 				const converter = await this.pickConverter(variantName, variant);
-				if (converter) {
-					const converterOutput = await converter.handle(
-						{
-							buffer,
-							size: this.fileInfo?.size ?? 0,
-							mimeType: this.fileInfo?.mimeType ?? "",
-							extname: this.fileInfo?.extname ?? "",
-							variantName,
-							variant,
-						},
-						this.modelOptions.variants[variantName]
-					);
-					const variantKey = this.generateKey(originalKey.split("/").pop()!.split(".").shift()!, `${variantName}.${converterOutput.extname}`);
-					await this.uploadFile(variantKey, converterOutput.buffer);
-					data.variants.push({
-						name: variantName,
-						extname: converterOutput.extname,
-						size: converterOutput.buffer.length,
-						mimeType: converterOutput.mimeType,
-						path: variantKey,
-					});
+				if (!converter) {
+					throw new Error(`Attachment Converter: No converter for the variant ${variantName} found`);
 				}
+				const converterOutput = await converter.handle({
+					buffer,
+					size: this.fileInfo?.size ?? 0,
+					mimeType: this.fileInfo?.mimeType ?? "",
+					extname: this.fileInfo?.extname ?? "",
+					variantName,
+					variant,
+				});
+				// biome-ignore lint/style/noNonNullAssertion: originalKey is guaranteed to be non-null
+				const variantKey = this.generateKey(originalKey.split("/").pop()!.split(".").shift()!, `${variantName}.${converterOutput.extname}`);
+				await this.uploadFile(variantKey, converterOutput.buffer);
+				data.variants.push({
+					name: variantName,
+					extname: converterOutput.extname,
+					size: converterOutput.buffer.length,
+					mimeType: converterOutput.mimeType,
+					path: variantKey,
+				});
 			}
 		}
 
@@ -186,10 +194,7 @@ export class AttachmentConverter<
 			const blurhashEnabled = typeof this.modelOptions.blurhash === "boolean" ? this.modelOptions.blurhash : this.modelOptions.blurhash?.enabled;
 
 			if (blurhashEnabled) {
-				(data as ImageAttachment).blurhash = await imageToBlurhash(
-					buffer,
-					typeof this.modelOptions.blurhash === "object" ? this.modelOptions.blurhash : undefined
-				);
+				(data as ImageAttachment).blurhash = await imageToBlurhash(buffer, typeof this.modelOptions.blurhash === "object" ? this.modelOptions.blurhash : undefined);
 			}
 		}
 
