@@ -1,5 +1,5 @@
 {
-	"name": "example",
+	"name": "example7",
 	"version": "1.0.50",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
@@ -8,25 +8,29 @@
 	},
 	"dependencies": {
 		"@elysiajs/cron": "^1.4.1",
-		"@elysiajs/openapi": "^1.4.13",
-		"@mikro-orm/core": "^6.6.2",
-		"@mikro-orm/postgresql": "^6.6.2",
-		"@mikro-orm/sqlite": "^6.6.2",
+		"@elysiajs/openapi": "^1.4.14",
+		"@mikro-orm/core": "7.0.9",
+		"@mikro-orm/postgresql": "7.0.9",
+		"@mikro-orm/sqlite": "7.0.9",
 		"mikro-orm-attachments": "workspace:*",
 		"arkenv": "^0.8.3",
 		"arkregex": "^0.0.5",
-		"arktype": "^2.1.29",
+		"arktype": "^2.2.0",
 		"blurhash": "^2.0.5",
 		"elysia": "latest",
 		"flydrive": "^2.1.0",
-		"mikro-orm": "^6.6.2",
+		"mikro-orm": "7.0.9",
 		"reflect-metadata": "^0.2.2",
 		"sharp": "^0.34.5",
 		"sqlite3": "^5.1.7",
-		"zod": "^4.3.5"
+		"zod": "^4.3.6"
 	},
 	"devDependencies": {
-		"bun-types": "latest"
+		"@mikro-orm/decorators": "7.0.9",
+		"@mikro-orm/sql": "7.0.9",
+		"bun-types": "latest",
+		"kysely": "^0.28.15",
+		"kysely-bun-sqlite": "^0.4.0"
 	},
 	"module": "src/index.js"
 }

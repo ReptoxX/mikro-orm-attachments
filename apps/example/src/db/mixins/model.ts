@@ -1,4 +1,4 @@
-import { Entity, Opt, PrimaryKey, Property } from "@mikro-orm/core";
+import { PrimaryKey, Entity } from "@mikro-orm/decorators/legacy";
 import { Timestamped } from "./timestamped";
 
 @Entity({ abstract: true })

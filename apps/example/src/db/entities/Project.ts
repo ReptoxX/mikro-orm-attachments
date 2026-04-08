@@ -1,4 +1,4 @@
-import { Entity, Property } from "@mikro-orm/core";
+import { Entity, Property } from "@mikro-orm/decorators/legacy";
 import { TenantScoped } from "../mixins/tenantScoped";
 import { SoftDeletable } from "../mixins/softDeletable";
 import { Model } from "../mixins/model";
