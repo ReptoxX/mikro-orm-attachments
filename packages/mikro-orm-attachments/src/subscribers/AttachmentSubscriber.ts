@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: MikroORM uses any */
-import type { EventArgs, FlushEventArgs, TransactionEventArgs } from "@mikro-orm/core";
+import type { EventArgs, FlushEventArgs } from "@mikro-orm/core";
 import { Disk } from "flydrive";
 import type { DriverContract } from "flydrive/types";
 
@@ -17,7 +17,6 @@ import {
 } from "../typings";
 
 interface EventSubscriber {
-	getSubscribedEvents(): string[];
 	onLoad(args: any): Promise<void>;
 	beforeFlush(args: any): Promise<void>;
 }

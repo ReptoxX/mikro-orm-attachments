@@ -1,4 +1,4 @@
-import { Filter, Index, Property } from "@mikro-orm/core";
+import { Filter, Property, Index } from "@mikro-orm/decorators/legacy";
 import type { Constructor } from "../mixin";
 
 export function SoftDeletable<TBase extends Constructor>(Base: TBase) {

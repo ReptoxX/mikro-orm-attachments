@@ -1,4 +1,5 @@
-import { type Opt, Property } from "@mikro-orm/core";
+import { type Opt } from "@mikro-orm/core";
+import { Property } from "@mikro-orm/decorators/legacy";
 import type { Constructor } from "../mixin";
 
 export function Timestamped<TBase extends Constructor>(Base: TBase) {

@@ -1,10 +1,5 @@
-import {
-	BeforeUpdate,
-	Filter,
-	Index,
-	type Opt,
-	Property,
-} from "@mikro-orm/core";
+import { type Opt } from "@mikro-orm/core";
+import { Index, Property, Filter, BeforeUpdate } from "@mikro-orm/decorators/legacy";
 import type { Constructor } from "../mixin";
 
 export interface ITenantScoped {

@@ -1,12 +1,5 @@
-import {
-	BooleanType,
-	Collection,
-	Entity,
-	Index,
-	ManyToOne,
-	OneToMany,
-	Property,
-} from "@mikro-orm/core";
+import { BooleanType, Collection } from "@mikro-orm/core";
+import { Index, Property, ManyToOne, OneToMany, Entity } from "@mikro-orm/decorators/legacy";
 import { Model } from "../mixins/model";
 
 export type TenantKind = "BRAND" | "AGENCY";
