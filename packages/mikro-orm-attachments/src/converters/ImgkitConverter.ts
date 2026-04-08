@@ -1,11 +1,10 @@
 import { fileTypeFromBuffer } from "file-type";
-import type * as ImgKit from "imgkit";
+import { type TransformOptions, transform } from "imgkit";
 
 import type { ConvertInput, ConvertOutput } from "../types/converter";
-import { use } from "../utils/helpers";
 import { BaseConverter } from "./BaseConverter";
 
-interface ImgkitConverterOptions extends ImgKit.TransformOptions {}
+interface ImgkitConverterOptions extends TransformOptions {}
 
 export class ImgkitConverter extends BaseConverter<ConvertInput, ConvertOutput> {
 	constructor(private readonly options?: ImgkitConverterOptions) {
@@ -16,9 +15,7 @@ export class ImgkitConverter extends BaseConverter<ConvertInput, ConvertOutput> 
 	}
 
 	async handle(input: ConvertInput): Promise<ConvertOutput> {
-		const imgkit: typeof ImgKit = await use("imgkit");
-
-		const image = await imgkit.transform(input.buffer, this.options ?? {});
+		const image = await transform(input.buffer, this.options ?? {});
 		const fileType = await fileTypeFromBuffer(new Uint8Array(image.buffer));
 
 		return {

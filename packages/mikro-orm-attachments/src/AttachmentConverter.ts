@@ -9,7 +9,6 @@ import { BaseConverter } from "./converters/BaseConverter";
 import { ATTACHMENT_FILE, ATTACHMENT_FN_PROCESS, ATTACHMENT_LOADED } from "./symbols";
 import type { AttachmentConverterProps } from "./types/attachment";
 import type { AttachmentBase, AttachmentOptions, ImageAttachment, NormalizedAttachmentPropertyOptions, VariantSpec } from "./typings";
-import { imageToBlurhash } from "./utils/helpers";
 
 export class AttachmentConverter<
 	TDrivers extends Record<string, DriverContract> = Record<string, DriverContract>,
@@ -191,11 +190,10 @@ export class AttachmentConverter<
 		}
 
 		if (this.fileInfo?.mimeType.startsWith("image/")) {
-			const blurhashEnabled = typeof this.modelOptions.blurhash === "boolean" ? this.modelOptions.blurhash : this.modelOptions.blurhash?.enabled;
-
-			if (blurhashEnabled) {
-				(data as ImageAttachment).blurhash = await imageToBlurhash(buffer, typeof this.modelOptions.blurhash === "object" ? this.modelOptions.blurhash : undefined);
-			}
+			// const blurhashEnabled = typeof this.modelOptions.blurhash === "boolean" ? this.modelOptions.blurhash : this.modelOptions.blurhash?.enabled;
+			// if (blurhashEnabled) {
+			// 	(data as ImageAttachment).blurhash = await imageToBlurhash(buffer, typeof this.modelOptions.blurhash === "object" ? this.modelOptions.blurhash : undefined);
+			// }
 		}
 
 		this.done(data);
