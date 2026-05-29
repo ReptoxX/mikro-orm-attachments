@@ -98,6 +98,14 @@ export class Attachment<Variants extends string = string> {
 		return variant;
 	}
 
+	key(variant?: Variants) {
+		this.#ensureLoaded();
+		if (variant) {
+			return this.#getVariant(variant).path;
+		}
+		return this.data?.path;
+	}
+
 	url(variant?: Variants) {
 		this.#ensureLoaded();
 		if (variant) {
@@ -124,7 +132,7 @@ export class Attachment<Variants extends string = string> {
 		return this.data?.meta;
 	}
 
-	preSignedUrl(variantNameOrOptions?: string | SignedURLOptions, signedUrlOptions?: SignedURLOptions) {
+	async preSignedUrl(variantNameOrOptions?: string | SignedURLOptions, signedUrlOptions?: SignedURLOptions) {
 		this.#ensureLoaded();
 		if (typeof variantNameOrOptions === "string") {
 			return this.#disk?.getSignedUrl(this.#getVariant(variantNameOrOptions).path, signedUrlOptions);

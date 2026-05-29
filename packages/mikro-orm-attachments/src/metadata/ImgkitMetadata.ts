@@ -5,7 +5,11 @@ import { BaseMetadata } from "./BaseMetadata";
 
 export class ImgkitMetadata<T extends ImageMetadata> extends BaseMetadata<T> {
 	async metadata(input: ConvertInput): Promise<T> {
-		const meta = await metadata(input.buffer);
-		return meta as T;
+		if (input.mimeType.startsWith("image/")) {
+			const meta = await metadata(input.buffer);
+			return meta as T;
+		} else {
+			return {} as T;
+		}
 	}
 }
