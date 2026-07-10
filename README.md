@@ -245,6 +245,33 @@ When adding a new attachment column:
 1. Add the property using `@AttachmentProperty`.
 2. Add a JSON or JSONB column to your DB schema.
 
+### Regenerating variants for existing rows
+
+If you change a property's `variants` config (resize dimensions, format, add/remove a variant) after rows already have attachments, existing rows keep whatever was generated under the *old* config until you regenerate them:
+
+```ts
+const project = await em.findOneOrFail(Project, { id });
+await attachmentSubscriber.regenerateVariants(project, "avatar");
+await em.persist(project).flush();
+```
+
+This re-runs variant generation against the **current** `variants` config. It never re-uploads or touches the original file - only variants are (re)created. A variant is only regenerated if its config actually changed since it was last generated; unaffected variants are left completely untouched (no re-upload, no write). Notes:
+
+-   **First run after upgrading** always regenerates every declared variant once per row, since older rows have no record of what config produced them - expected, not a bug. From then on, unaffected variants are skipped.
+-   `entity[propertyName]` must already be loaded (fetched via the `EntityManager`, or previously flushed) - the method throws otherwise.
+-   Options (all optional):
+    -   `only`: string[] - restrict regeneration to just these variant names.
+    -   `force`: boolean - regenerate even if the stored config already matches.
+    -   `deleteOrphaned`: boolean (default `false`) - delete storage objects for variants no longer present in the config. Off by default so nothing is ever silently deleted.
+-   Batch example over an entire table:
+
+```ts
+for await (const project of em.findAll(Project, { batchSize: 100 })) {
+	await attachmentSubscriber.regenerateVariants(project, "avatar");
+	await em.flush();
+}
+```
+
 ---
 
 ## FAQ

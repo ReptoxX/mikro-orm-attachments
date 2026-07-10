@@ -2,7 +2,16 @@ import { Buffer } from "node:buffer";
 import type { Disk } from "flydrive";
 import type { SignedURLOptions } from "flydrive/types";
 
-import { ATTACHMENT_DISK, ATTACHMENT_FILE, ATTACHMENT_FN_KEYS, ATTACHMENT_FN_LOAD, ATTACHMENT_FN_PROCESS, ATTACHMENT_FN_SAVE, ATTACHMENT_LOADED } from "./symbols";
+import {
+	ATTACHMENT_DISK,
+	ATTACHMENT_FILE,
+	ATTACHMENT_FN_KEYS,
+	ATTACHMENT_FN_LOAD,
+	ATTACHMENT_FN_PROCESS,
+	ATTACHMENT_FN_SAVE,
+	ATTACHMENT_FN_UPDATE,
+	ATTACHMENT_LOADED,
+} from "./symbols";
 import type { AttachmentBase, ImageAttachment } from "./typings";
 
 export class Attachment<Variants extends string = string> {
@@ -57,6 +66,10 @@ export class Attachment<Variants extends string = string> {
 		}
 		this.data = data;
 		this[ATTACHMENT_LOADED] = true;
+	}
+
+	[ATTACHMENT_FN_UPDATE](data: AttachmentBase) {
+		this.data = data;
 	}
 
 	static fromFile(file: File): Attachment {
@@ -165,7 +178,7 @@ export class Attachment<Variants extends string = string> {
 
 	async getBytes(variantName?: Variants) {
 		this.#ensureLoaded();
-		const path = variantName ? this.#getVariant(variantName).path : (this.data?.path ?? "");
+		const path = variantName ? this.#getVariant(variantName).path : this.data?.path ?? "";
 		return this.#disk?.getBytes(path);
 	}
 
@@ -180,7 +193,7 @@ export class Attachment<Variants extends string = string> {
 
 	async getStream(variantName?: Variants) {
 		this.#ensureLoaded();
-		const path = variantName ? this.#getVariant(variantName).path : (this.data?.path ?? "");
+		const path = variantName ? this.#getVariant(variantName).path : this.data?.path ?? "";
 		return this.#disk?.getStream(path);
 	}
 

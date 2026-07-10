@@ -89,7 +89,7 @@ export interface AttachmentBase {
 	path: string;
 	originalName: string;
 	meta?: ConvertMetadata;
-	variants: Omit<AttachmentBase, "variants" | "originalName" | "drive">[];
+	variants: (Omit<AttachmentBase, "variants" | "originalName" | "drive"> & { configHash?: string })[];
 }
 export interface ImageAttachment extends AttachmentBase {
 	blurhash?: string;
@@ -105,3 +105,12 @@ export interface ImageAttachment extends AttachmentBase {
 }
 
 export type VariantSpec = BaseConverter<ConvertInput, ConvertOutput>;
+
+export interface RegenerateVariantsOptions {
+	/** Only (re)generate these variant names; all others are left untouched. */
+	only?: string[];
+	/** Regenerate even if the stored config fingerprint already matches the current config. */
+	force?: boolean;
+	/** Delete storage objects (and metadata) for variants no longer present in the current config. Defaults to false. Ignored when `only` is set. */
+	deleteOrphaned?: boolean;
+}
