@@ -25,11 +25,12 @@ Inside `packages/mikro-orm-attachments`:
 ```sh
 bun run build                # bunup build -> dist/ (esm, minified, .d.ts via tsgo)
 bun run dev                   # bunup --watch
+bun test                      # bun's built-in test runner over src/**/*.test.ts
 bun run version:patch|minor|major   # standard-version bump (also: `bun run version`)
 bun run copy:readme            # copies root README/CHANGELOG into the package (used by the publish workflow)
 ```
 
-There is currently **no test suite and no lint/check-types script** anywhere in the repo (the `apps/example` `test` script is a placeholder that exits 1; `turbo.json` declares a `check-types` task but no package implements it). Don't assume `bun test` or `bun run lint` do anything meaningful unless you add them yourself.
+`packages/mikro-orm-attachments` has a `bun test` suite (`src/**/*.test.ts`, e.g. `Attachment.test.ts`, `subscribers/AttachmentSubscriber.test.ts`) exercising the subscriber hooks and `Attachment`'s internal symbol-keyed methods directly (no MikroORM EntityManager/DB driver involved — tests call `subscriber.onLoad`/`afterDelete` the same way MikroORM's EventManager would). There is still **no test suite anywhere else in the repo and no lint/check-types script** (the `apps/example` `test` script is a placeholder that exits 1; `turbo.json` declares a `check-types` task but no package implements it). Don't assume `bun run lint` does anything meaningful unless you add it yourself.
 
 Publishing to npm happens via `.github/workflows/publish.yml` (manual `workflow_dispatch`), which bumps the version with `standard-version`, builds with `bunup`, and publishes `packages/mikro-orm-attachments`.
 

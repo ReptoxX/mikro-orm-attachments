@@ -90,8 +90,7 @@ const app = new Elysia()
 			if (!project) {
 				return status(404);
 			}
-			project.softDelete();
-			await em.persist(project).flush();
+			await em.remove(project).flush();
 			return Object.assign({}, project);
 		},
 		{
