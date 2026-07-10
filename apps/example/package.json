@@ -29,6 +29,7 @@
 		"@mikro-orm/decorators": "7.0.9",
 		"@mikro-orm/sql": "7.0.9",
 		"bun-types": "latest",
+		"imgkit-linux-x64-gnu": "^2.3.0",
 		"kysely": "^0.28.15",
 		"kysely-bun-sqlite": "^0.4.0"
 	},

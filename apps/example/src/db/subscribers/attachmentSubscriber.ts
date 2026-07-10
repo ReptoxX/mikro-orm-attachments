@@ -1,4 +1,5 @@
-import { AttachmentSubscriber } from "@monorepo/mikro-orm-attachments";
+import { AttachmentSubscriber } from "mikro-orm-attachments";
+import { ImgkitConverter } from "mikro-orm-attachments/converters/ImgkitConverter";
 import { FSDriver } from "flydrive/drivers/fs";
 
 export const attachmentSubscriber = new AttachmentSubscriber({
@@ -21,28 +22,14 @@ export const attachmentSubscriber = new AttachmentSubscriber({
 		// }),
 	},
 	variants: {
-		thumbnail: {
+		thumbnail: new ImgkitConverter({
 			resize: {
 				height: 100,
 			},
-			format: {
+			output: {
 				format: "webp",
-				options: {
-					quality: 80,
-				},
 			},
-		},
-		"2x": {
-			resize: {
-				height: 200,
-			},
-			format: {
-				format: "webp",
-				options: {
-					quality: 80,
-				},
-			},
-		},
+		}),
 	},
 	defaultDriver: "fs",
 });
