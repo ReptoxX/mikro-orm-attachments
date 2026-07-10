@@ -6,7 +6,7 @@ import { errorHandler } from "./plugins/errorHandler";
 import { db } from "./plugins/db";
 import { Project } from "./db/entities/Project";
 import { type } from "arktype";
-import { Attachment } from "@monorepo/mikro-orm-attachments";
+import { Attachment } from "mikro-orm-attachments";
 
 const app = new Elysia()
 	.use(errorHandler)
@@ -137,4 +137,4 @@ const app = new Elysia()
 	)
 	.listen(3000);
 
-console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
+console.log(`🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`);
