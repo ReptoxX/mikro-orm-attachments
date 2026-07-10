@@ -90,9 +90,26 @@ const app = new Elysia()
 			if (!project) {
 				return status(404);
 			}
-			project.softDelete();
-			await em.persist(project).flush();
+			await em.remove(project).flush();
 			return Object.assign({}, project);
+		},
+		{
+			params: type({ id: "string.numeric.parse | number" }),
+		}
+	)
+	.delete(
+		"/projects/:id/hard",
+		async ({ em, params }) => {
+			const project = await em.findOne(
+				Project,
+				{ id: params.id },
+				{ filters: { softDelete: false } }
+			);
+			if (!project) {
+				return status(404);
+			}
+			await em.remove(project).flush();
+			return { ok: true };
 		},
 		{
 			params: type({ id: "string.numeric.parse | number" }),

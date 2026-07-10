@@ -2,7 +2,7 @@ import { Buffer } from "node:buffer";
 import type { Disk } from "flydrive";
 import type { SignedURLOptions } from "flydrive/types";
 
-import { ATTACHMENT_DISK, ATTACHMENT_FILE, ATTACHMENT_FN_LOAD, ATTACHMENT_FN_PROCESS, ATTACHMENT_FN_SAVE, ATTACHMENT_LOADED } from "./symbols";
+import { ATTACHMENT_DISK, ATTACHMENT_FILE, ATTACHMENT_FN_KEYS, ATTACHMENT_FN_LOAD, ATTACHMENT_FN_PROCESS, ATTACHMENT_FN_SAVE, ATTACHMENT_LOADED } from "./symbols";
 import type { AttachmentBase, ImageAttachment } from "./typings";
 
 export class Attachment<Variants extends string = string> {
@@ -34,6 +34,16 @@ export class Attachment<Variants extends string = string> {
 	// Internal functions
 	[ATTACHMENT_FN_SAVE]() {
 		return this.data ?? {};
+	}
+
+	[ATTACHMENT_FN_KEYS](): string[] {
+		if (!this.data) return [];
+		const keys: string[] = [];
+		if (this.data.path) keys.push(this.data.path);
+		for (const variant of this.data.variants) {
+			if (variant.path) keys.push(variant.path);
+		}
+		return keys;
 	}
 
 	static [ATTACHMENT_FN_LOAD](value: AttachmentBase): Attachment {

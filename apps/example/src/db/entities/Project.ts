@@ -6,7 +6,7 @@ import { Attachment } from "mikro-orm-attachments";
 import { AttachmentProperty } from "../subscribers/attachmentSubscriber";
 
 @Entity()
-export class Project extends TenantScoped(SoftDeletable(Model)) {
+export class Project extends Model {
 	@Property()
 	name!: string;
 
