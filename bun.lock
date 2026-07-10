@@ -5,7 +5,7 @@
     "": {
       "name": "monorepo",
       "devDependencies": {
-        "turbo": "^2.9.4",
+        "turbo": "^2.10.4",
       },
     },
     "apps/example": {
@@ -34,6 +34,7 @@
         "@mikro-orm/decorators": "7.0.9",
         "@mikro-orm/sql": "7.0.9",
         "bun-types": "latest",
+        "imgkit-darwin-arm64": "^2.3.0",
         "imgkit-linux-x64-gnu": "^2.3.0",
         "kysely": "^0.28.15",
         "kysely-bun-sqlite": "^0.4.0",
@@ -51,6 +52,7 @@
         "@typescript/native-preview": "^7.0.0-dev.20260408.1",
         "bun-types": "1.3.11",
         "bunup": "^0.16.31",
+        "flydrive": "^2.1.0",
         "imgkit": "^2.2.1",
         "standard-version": "^9.5.0",
         "typescript": "^6.0.2",
@@ -288,17 +290,17 @@
 
     "@tootallnate/once": ["@tootallnate/once@1.1.2", "", {}, "sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw=="],
 
-    "@turbo/darwin-64": ["@turbo/darwin-64@2.9.4", "", { "os": "darwin", "cpu": "x64" }, "sha512-ZSlPqJ5Vqg/wgVw8P3AOVCIosnbBilOxLq7TMz3MN/9U46DUYfdG2jtfevNDufyxyrg98pcPs/GBgDRaaids6g=="],
+    "@turbo/darwin-64": ["@turbo/darwin-64@2.10.4", "", { "os": "darwin", "cpu": "x64" }, "sha512-m1MUEI4MJ69r5CwfMYxmHi0H0rrgiYCBOp0tgBZ9x/YVvOb5uu/lRIDyDwdtH054R2yWeQaIigUGu6aCX9f8cA=="],
 
-    "@turbo/darwin-arm64": ["@turbo/darwin-arm64@2.9.4", "", { "os": "darwin", "cpu": "arm64" }, "sha512-9cjTWe4OiNlFMSRggPNh+TJlRs7MS5FWrHc96MOzft5vESWjjpvaadYPv5ykDW7b45mVHOF2U/W+48LoX9USWw=="],
+    "@turbo/darwin-arm64": ["@turbo/darwin-arm64@2.10.4", "", { "os": "darwin", "cpu": "arm64" }, "sha512-VQ1Yxs5zkPT+2z7t1P4mvn6JmcKLkOCAsPuK9XbOvuVj0DlTlETfIXNisX0771v/vTWHOQqiwoGi+TtAUq8efw=="],
 
-    "@turbo/linux-64": ["@turbo/linux-64@2.9.4", "", { "os": "linux", "cpu": "x64" }, "sha512-Cl1GjxqBXQ+r9KKowmXG+lhD1gclLp48/SE7NxL//66iaMytRw0uiphWGOkccD92iPiRjHLRUaA9lOTtgr5OCA=="],
+    "@turbo/linux-64": ["@turbo/linux-64@2.10.4", "", { "os": "linux", "cpu": "x64" }, "sha512-IzV1QovmwX7mfGnVinmE++2IB8tbeo38weltiuH5zNqwCTBjLs/DytyRKx+bmnhHdXIq9SheR8p0Nip/LBUPHg=="],
 
-    "@turbo/linux-arm64": ["@turbo/linux-arm64@2.9.4", "", { "os": "linux", "cpu": "arm64" }, "sha512-j2hPAKVmGNN2EsKigEWD+43y9m7zaPhNAs6ptsyfq0u7evHHBAXAwOfv86OEMg/gvC+pwGip0i1CIm1bR1vYug=="],
+    "@turbo/linux-arm64": ["@turbo/linux-arm64@2.10.4", "", { "os": "linux", "cpu": "arm64" }, "sha512-rfujSQkP5aYiRn0PgTM7F00WkJCP/bKDVZbOx3WmrZwa/vHA0bplhCl328kpX7VI9HH2vI90ISGwuSVgJgoqTw=="],
 
-    "@turbo/windows-64": ["@turbo/windows-64@2.9.4", "", { "os": "win32", "cpu": "x64" }, "sha512-1jWPjCe9ZRmsDTXE7uzqfySNQspnUx0g6caqvwps+k/sc+fm9hC/4zRQKlXZLbVmP3Xxp601Ju71boegHdnYGw=="],
+    "@turbo/windows-64": ["@turbo/windows-64@2.10.4", "", { "os": "win32", "cpu": "x64" }, "sha512-NnspP7Wd5fa3Wwnqv9bKfhegqZzuHBgbPxdZU/idTLQcazx/vgKu95JlCx2YHY0hdvKCnPcARrDwM+KEUmaO7A=="],
 
-    "@turbo/windows-arm64": ["@turbo/windows-arm64@2.9.4", "", { "os": "win32", "cpu": "arm64" }, "sha512-dlko15TQVu/BFYmIY018Y3covWMRQlUgAkD+OOk+Rokcfj6VY02Vv4mCfT/Zns6B4q8jGbOd6IZhnCFYsE8Viw=="],
+    "@turbo/windows-arm64": ["@turbo/windows-arm64@2.10.4", "", { "os": "win32", "cpu": "arm64" }, "sha512-Iv02YgOpaEShc2OkG7mgCJ2pEw1RUKiKbs0h8W5wAf4jZ5vpmraTEjuGTgHRuOORQnC1GN3KHo5WB+hu1abRMA=="],
 
     "@tybys/wasm-util": ["@tybys/wasm-util@0.10.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg=="],
 
@@ -574,7 +576,7 @@
 
     "imgkit": ["imgkit@2.2.1", "", { "optionalDependencies": { "imgkit-darwin-arm64": "2.2.1", "imgkit-darwin-x64": "2.2.1", "imgkit-linux-arm64-gnu": "2.2.1", "imgkit-linux-x64-gnu": "2.2.1", "imgkit-linux-x64-musl": "2.2.1", "imgkit-windows-arm64": "2.2.1", "imgkit-windows-x64": "2.2.1" }, "bin": { "imgkit-build": "dist/bin/imgkit-build.js" } }, "sha512-t+EqDBZYBr7kBBoTnbbOZQAgFC9W+64GsMgGlf8T1rdOXuE2IgyCLt9rvp4r0GWJlLBKzi/LuH8U/ZJwv1MGAA=="],
 
-    "imgkit-darwin-arm64": ["imgkit-darwin-arm64@2.2.1", "", { "os": "darwin", "cpu": "arm64" }, "sha512-pzFQZEnTUbKUqLAdX4pRcxhcBeD2E0GzFIomLU01tl7yS+pQ64NXMlnCY4xGu1/kwihTCOO6A4t9T1Jtb6UZOg=="],
+    "imgkit-darwin-arm64": ["imgkit-darwin-arm64@2.3.0", "", { "os": "darwin", "cpu": "arm64" }, "sha512-awXYXflpZ98d0XIUgpPnPiq2LZ1Mq63UUWFAC94OSHtILyIhKBPLqyml/hVoz60SScuYrojP5XwFYiXmV/f2jw=="],
 
     "imgkit-darwin-x64": ["imgkit-darwin-x64@2.2.1", "", { "os": "darwin", "cpu": "x64" }, "sha512-uaYmLeXPhvkdv+ASHAbQTswLQ+T0tOgsTG4iAeMR4xw1WbAWM3IvLQCTggC/0b3OQyjJEwQz5+k/AXyAGUYR1g=="],
 
@@ -926,7 +928,7 @@
 
     "tunnel-agent": ["tunnel-agent@0.6.0", "", { "dependencies": { "safe-buffer": "^5.0.1" } }, "sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w=="],
 
-    "turbo": ["turbo@2.9.4", "", { "optionalDependencies": { "@turbo/darwin-64": "2.9.4", "@turbo/darwin-arm64": "2.9.4", "@turbo/linux-64": "2.9.4", "@turbo/linux-arm64": "2.9.4", "@turbo/windows-64": "2.9.4", "@turbo/windows-arm64": "2.9.4" }, "bin": { "turbo": "bin/turbo" } }, "sha512-wZ/kMcZCuK5oEp7sXSSo/5fzKjP9I2EhoiarZjyCm2Ixk0WxFrC/h0gF3686eHHINoFQOOSWgB/pGfvkR8rkgQ=="],
+    "turbo": ["turbo@2.10.4", "", { "optionalDependencies": { "@turbo/darwin-64": "2.10.4", "@turbo/darwin-arm64": "2.10.4", "@turbo/linux-64": "2.10.4", "@turbo/linux-arm64": "2.10.4", "@turbo/windows-64": "2.10.4", "@turbo/windows-arm64": "2.10.4" }, "bin": { "turbo": "bin/turbo" } }, "sha512-GQpduILaKjoaGljw097ScsSyKTtZSY7cZ3bJktzfTkPMyCf3ShKLuXK2IaOEN2Plziml+ArR7WJ1m+V4VbnaKQ=="],
 
     "type-fest": ["type-fest@0.18.1", "", {}, "sha512-OIAYXk8+ISY+qTOwkHtKqzAuxchoMiD9Udx+FSGQDuiRR+PJKJHc2NJAXlbhkGwTt/4/nKZxELY1w3ReWOL8mw=="],
 
@@ -993,6 +995,8 @@
     "git-raw-commits/split2": ["split2@3.2.2", "", { "dependencies": { "readable-stream": "^3.0.0" } }, "sha512-9NThjpgZnifTkJpzTZ7Eue85S49QwpNhZTq6GRJwObb6jnLFNGB7Qm73V5HewTROPyxD0C29xqmaI68bQtV+hg=="],
 
     "git-semver-tags/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
+
+    "imgkit/imgkit-darwin-arm64": ["imgkit-darwin-arm64@2.2.1", "", { "os": "darwin", "cpu": "arm64" }, "sha512-pzFQZEnTUbKUqLAdX4pRcxhcBeD2E0GzFIomLU01tl7yS+pQ64NXMlnCY4xGu1/kwihTCOO6A4t9T1Jtb6UZOg=="],
 
     "imgkit/imgkit-linux-x64-gnu": ["imgkit-linux-x64-gnu@2.2.1", "", { "os": "linux", "cpu": "x64" }, "sha512-Pm5X7Ikl57hCh+GLgrRYohF5kO4iJrmXRApwPIRhmkuh8rc5Xe6hS0nKeiZUBved14fDA3ZBDR0FJwHZn6S5wQ=="],
 

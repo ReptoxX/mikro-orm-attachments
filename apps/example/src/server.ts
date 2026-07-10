@@ -7,6 +7,7 @@ import { db } from "./plugins/db";
 import { Project } from "./db/entities/Project";
 import { type } from "arktype";
 import { Attachment } from "mikro-orm-attachments";
+import { attachmentSubscriber } from "./db/subscribers/attachmentSubscriber";
 
 const app = new Elysia()
 	.use(errorHandler)
@@ -81,6 +82,16 @@ const app = new Elysia()
 			type: "multipart/form-data",
 		}
 	)
+	.post(
+		"/projects/:id/regenerate",
+		async ({ em, params }) => {
+			const project = await em.findOneOrFail(Project, { id: params.id });
+			attachmentSubscriber.regenerateVariants(project, "");
+		},
+		{
+			params: type({ id: "string.numeric.parse | number" }),
+		}
+	)
 	.delete(
 		"/projects/:id",
 		async ({ em, params }) => {
@@ -100,11 +111,7 @@ const app = new Elysia()
 	.delete(
 		"/projects/:id/hard",
 		async ({ em, params }) => {
-			const project = await em.findOne(
-				Project,
-				{ id: params.id },
-				{ filters: { softDelete: false } }
-			);
+			const project = await em.findOne(Project, { id: params.id }, { filters: { softDelete: false } });
 			if (!project) {
 				return status(404);
 			}

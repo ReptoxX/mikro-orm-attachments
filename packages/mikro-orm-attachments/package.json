@@ -88,6 +88,7 @@
 		"@typescript/native-preview": "^7.0.0-dev.20260408.1",
 		"bun-types": "1.3.11",
 		"bunup": "^0.16.31",
+		"flydrive": "^2.1.0",
 		"imgkit": "^2.2.1",
 		"standard-version": "^9.5.0",
 		"typescript": "^6.0.2"
