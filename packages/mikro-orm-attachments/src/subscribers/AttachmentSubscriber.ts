@@ -6,7 +6,7 @@ import type { DriverContract } from "flydrive/types";
 import { Attachment } from "../Attachment";
 import { AttachmentConverter } from "../AttachmentConverter";
 import { createAttachmentDecorator, getAttachmentProps } from "../decorators/AttachmentDecorator";
-import { ATTACHMENT_DISK, ATTACHMENT_LOADED } from "../symbols";
+import { ATTACHMENT_DISK, ATTACHMENT_FN_KEYS, ATTACHMENT_LOADED } from "../symbols";
 import {
 	type AttachmentDecoratorProps,
 	type AttachmentOptions,
@@ -19,6 +19,7 @@ import {
 interface EventSubscriber {
 	onLoad(args: any): Promise<void>;
 	beforeFlush(args: any): Promise<void>;
+	afterDelete(args: any): Promise<void>;
 }
 
 export class AttachmentSubscriber<const TDrivers extends Record<string, DriverContract>, const TVariants extends Record<string, VariantSpec>> implements EventSubscriber {
@@ -97,6 +98,36 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 				} catch (error) {
 					console.error(error);
 					throw new Error("Failed to process attachment");
+				}
+			}
+		}
+	}
+
+	async afterDelete(args: any): Promise<void> {
+		const { entity } = args as EventArgs<any>;
+		await this.#handleDelete(entity);
+	}
+
+	async #handleDelete(entity: any) {
+		const props = getAttachmentProps<AttachmentSubscriber<TDrivers, TVariants>>(entity);
+		for (const prop of Object.keys(props)) {
+			const value = entity[prop];
+			const config = props[prop];
+
+			if (!(value instanceof Attachment) || !value[ATTACHMENT_LOADED]) {
+				continue;
+			}
+
+			const disk = value.getDisk() ?? this.#getDisk(config, value.getDrive() as Extract<keyof TDrivers, string>, false);
+			if (!disk) {
+				continue;
+			}
+
+			for (const key of value[ATTACHMENT_FN_KEYS]()) {
+				try {
+					await disk.delete(key);
+				} catch (error) {
+					console.warn(`AttachmentSubscriber: failed to delete attachment file "${key}" for property "${prop}" on ${entity.constructor?.name ?? "entity"}`, error);
 				}
 			}
 		}

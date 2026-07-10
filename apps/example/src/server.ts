@@ -98,6 +98,24 @@ const app = new Elysia()
 			params: type({ id: "string.numeric.parse | number" }),
 		}
 	)
+	.delete(
+		"/projects/:id/hard",
+		async ({ em, params }) => {
+			const project = await em.findOne(
+				Project,
+				{ id: params.id },
+				{ filters: { softDelete: false } }
+			);
+			if (!project) {
+				return status(404);
+			}
+			await em.remove(project).flush();
+			return { ok: true };
+		},
+		{
+			params: type({ id: "string.numeric.parse | number" }),
+		}
+	)
 	.get(
 		"/project/:id/avatar",
 		async ({ em, params, set }) => {

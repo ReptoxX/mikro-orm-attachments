@@ -5,3 +5,4 @@ export const ATTACHMENT_DISK = Symbol("attachment:disk");
 export const ATTACHMENT_FN_PROCESS = Symbol("attachment:fn:process");
 export const ATTACHMENT_FN_LOAD = Symbol("attachment:fn:load");
 export const ATTACHMENT_FN_SAVE = Symbol("attachment:fn:save");
+export const ATTACHMENT_FN_KEYS = Symbol("attachment:fn:keys");
