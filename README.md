@@ -110,17 +110,28 @@ console.log(project.avatar.url()); // download URL (from urlBuilder)
 console.log(project.avatar.getStream()); // File-Stream
 ```
 
-### Deleting Attachments
+### Deleting & Replacing Attachments
 
 When you hard-delete an entity (`em.remove(entity)` + `em.flush()`), the plugin automatically deletes
-the attachment's underlying files (the original + every generated variant) from storage. This is
-best-effort: if a storage delete fails (network error, permissions, etc.), it's logged as a warning
-and the entity delete still completes — a storage error will never roll back your transaction.
+the attachment's underlying files (the original + every generated variant) from storage.
 
-**Limitation:** this only works for entities removed through MikroORM's normal delete lifecycle.
-Soft-delete patterns (setting a `deletedAt` column instead of calling `em.remove()`) and raw
-`em.nativeDelete()` / query-builder deletes bypass entity hooks and will **not** trigger file
-cleanup — you're responsible for cleaning up storage yourself in those cases.
+The same cleanup happens when you **replace** an attachment on an existing entity — assign a new file
+(or `null`) to the property and flush — the previously stored original + variants are deleted once the
+update succeeds:
+
+```ts
+project.avatar = Attachment.fromFile(newFile); // or: project.avatar = null;
+await orm.em.flush(); // old avatar's files are deleted from storage after the update commits
+```
+
+Both are best-effort: if a storage delete fails (network error, permissions, etc.), it's logged as a
+warning and the entity change still completes — a storage error will never roll back your transaction.
+
+**Limitation:** this only works for entities changed through MikroORM's normal persist lifecycle
+(`em.persist()`/`em.remove()` + flush). Soft-delete patterns (setting a `deletedAt` column instead of
+calling `em.remove()`) and raw `em.nativeUpdate()`/`em.nativeDelete()`/query-builder writes bypass
+entity hooks and will **not** trigger file cleanup — you're responsible for cleaning up storage
+yourself in those cases.
 
 ---
 

@@ -40,8 +40,8 @@ export class Attachment<Variants extends string = string> {
 		if (!this.data) return [];
 		const keys: string[] = [];
 		if (this.data.path) keys.push(this.data.path);
-		for (const variant of this.data.variants) {
-			if (variant.path) keys.push(variant.path);
+		for (const variant of this.data.variants ?? []) {
+			if (variant?.path) keys.push(variant.path);
 		}
 		return keys;
 	}
