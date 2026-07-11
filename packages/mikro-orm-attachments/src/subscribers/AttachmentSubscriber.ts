@@ -6,12 +6,14 @@ import type { DriverContract } from "flydrive/types";
 import { Attachment } from "../Attachment";
 import { AttachmentConverter } from "../AttachmentConverter";
 import { createAttachmentDecorator, getAttachmentProps } from "../decorators/AttachmentDecorator";
-import { ATTACHMENT_DISK, ATTACHMENT_FN_KEYS, ATTACHMENT_LOADED } from "../symbols";
+import { ATTACHMENT_DISK, ATTACHMENT_FN_KEYS, ATTACHMENT_FN_SAVE, ATTACHMENT_FN_UPDATE, ATTACHMENT_LOADED } from "../symbols";
 import {
+	type AttachmentBase,
 	type AttachmentDecoratorProps,
 	type AttachmentOptions,
 	type AttachmentPropertyOptions,
 	DEFAULT_ATTACHMENT_OPTIONS,
+	type RegenerateVariantsOptions,
 	type VariantSelection,
 	type VariantSpec,
 } from "../typings";
@@ -22,7 +24,9 @@ interface EventSubscriber {
 	afterDelete(args: any): Promise<void>;
 }
 
-export class AttachmentSubscriber<const TDrivers extends Record<string, DriverContract>, const TVariants extends Record<string, VariantSpec>> implements EventSubscriber {
+export class AttachmentSubscriber<const TDrivers extends Record<string, DriverContract>, const TVariants extends Record<string, VariantSpec>>
+	implements EventSubscriber
+{
 	private readonly disks: Map<Extract<keyof TDrivers, string>, Disk>;
 	constructor(private readonly options: AttachmentOptions<TDrivers, TVariants>) {
 		this.options = {
@@ -127,7 +131,10 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 				try {
 					await disk.delete(key);
 				} catch (error) {
-					console.warn(`AttachmentSubscriber: failed to delete attachment file "${key}" for property "${prop}" on ${entity.constructor?.name ?? "entity"}`, error);
+					console.warn(
+						`AttachmentSubscriber: failed to delete attachment file "${key}" for property "${prop}" on ${entity.constructor?.name ?? "entity"}`,
+						error
+					);
 				}
 			}
 		}
@@ -135,6 +142,44 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 
 	AttachmentDecorator(options?: AttachmentDecoratorProps<AttachmentSubscriber<TDrivers, TVariants>>) {
 		return createAttachmentDecorator<AttachmentSubscriber<TDrivers, TVariants>>(options);
+	}
+
+	/**
+	 * Re-runs variant generation for an already-persisted attachment property against
+	 * the current, live variant config. Only touches variants (add/changed/removed);
+	 * the original file is never re-uploaded. The entity must already be loaded (e.g.
+	 * fetched via the EntityManager, or previously flushed) - call `em.persist(entity).flush()`
+	 * afterwards to write the result back.
+	 */
+	async regenerateVariants(entity: any, propertyName: string, opts: RegenerateVariantsOptions = {}): Promise<void> {
+		const props = getAttachmentProps<AttachmentSubscriber<TDrivers, TVariants>>(entity);
+		const config = props[propertyName];
+		if (!config) {
+			throw new Error(`No attachment property "${propertyName}" on ${entity.constructor.name}`);
+		}
+
+		const value = entity[propertyName];
+		if (!(value instanceof Attachment) || !value[ATTACHMENT_LOADED]) {
+			throw new Error(`Attachment property "${propertyName}" must be loaded before regenerating variants (flush or fetch the entity first).`);
+		}
+
+		// biome-ignore lint/style/noNonNullAssertion: #getDisk with throwError=true never returns null
+		const disk = this.#getDisk(config, value.getDrive() as Extract<keyof TDrivers, string>, true)!;
+		value[ATTACHMENT_DISK] = disk;
+
+		const variants = this.#normalizeVariants(config.variants);
+		const converter = new AttachmentConverter(value, {
+			disk,
+			options: { ...config, variants },
+			config: this.options,
+			entity,
+			columnName: propertyName,
+			diskName: value.getDrive() || (config.driver ?? this.options.defaultDriver),
+		});
+
+		const current = value[ATTACHMENT_FN_SAVE]() as AttachmentBase;
+		const updated = await converter.regenerateVariants(current, opts);
+		value[ATTACHMENT_FN_UPDATE](updated);
 	}
 
 	#normalizeVariants(variants: VariantSelection<TVariants> | undefined): Record<string, VariantSpec> | undefined {

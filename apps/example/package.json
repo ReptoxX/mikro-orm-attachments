@@ -4,7 +4,8 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"dev": "bun run --watch src/index.ts",
-		"mikro": "mikro-orm"
+		"mikro": "mikro-orm",
+		"regenerate-variants": "bun run src/scripts/regenerate-variants.ts"
 	},
 	"dependencies": {
 		"@elysiajs/cron": "^1.4.1",
