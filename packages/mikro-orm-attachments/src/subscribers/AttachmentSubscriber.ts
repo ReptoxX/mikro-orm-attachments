@@ -5,6 +5,7 @@ import type { DriverContract } from "flydrive/types";
 
 import { Attachment } from "../Attachment";
 import { AttachmentConverter } from "../AttachmentConverter";
+import { AttachmentType } from "../DatabaseType";
 import { createAttachmentDecorator, getAttachmentProps } from "../decorators/AttachmentDecorator";
 import { ATTACHMENT_DISK, ATTACHMENT_FN_KEYS, ATTACHMENT_LOADED } from "../symbols";
 import {
@@ -19,6 +20,7 @@ import {
 interface EventSubscriber {
 	onLoad(args: any): Promise<void>;
 	beforeFlush(args: any): Promise<void>;
+	afterUpdate(args: any): Promise<void>;
 	afterDelete(args: any): Promise<void>;
 }
 
@@ -103,6 +105,40 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 		}
 	}
 
+	async afterUpdate(args: any): Promise<void> {
+		const { changeSet } = args as EventArgs<any>;
+		if (!changeSet || changeSet.type !== "update" || !changeSet.originalEntity) {
+			return;
+		}
+		await this.#handleUpdate(changeSet);
+	}
+
+	async #handleUpdate(changeSet: any) {
+		const entity = changeSet.entity;
+		const props = getAttachmentProps<AttachmentSubscriber<TDrivers, TVariants>>(entity);
+		for (const prop of Object.keys(props)) {
+			if (!(prop in changeSet.payload)) {
+				// property wasn't part of this update - nothing changed, nothing to clean up
+				continue;
+			}
+
+			const rawOld = changeSet.originalEntity?.[prop];
+			if (rawOld == null) {
+				// property was already null/unset before this update
+				continue;
+			}
+
+			const config = props[prop];
+			const oldAttachment = new AttachmentType(config).convertToJSValue(rawOld);
+
+			// guard against deleting a key the new value also uses (possible when `rename: false` reuses filenames)
+			const newValue = entity[prop];
+			const protectedKeys = newValue instanceof Attachment && newValue[ATTACHMENT_LOADED] ? new Set(newValue[ATTACHMENT_FN_KEYS]()) : undefined;
+
+			await this.#deleteAttachmentFiles(oldAttachment, config, prop, entity, protectedKeys);
+		}
+	}
+
 	async afterDelete(args: any): Promise<void> {
 		const { entity } = args as EventArgs<any>;
 		await this.#handleDelete(entity);
@@ -111,24 +147,28 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 	async #handleDelete(entity: any) {
 		const props = getAttachmentProps<AttachmentSubscriber<TDrivers, TVariants>>(entity);
 		for (const prop of Object.keys(props)) {
-			const value = entity[prop];
-			const config = props[prop];
+			await this.#deleteAttachmentFiles(entity[prop], props[prop], prop, entity);
+		}
+	}
 
-			if (!(value instanceof Attachment) || !value[ATTACHMENT_LOADED]) {
+	async #deleteAttachmentFiles(value: unknown, config: AttachmentPropertyOptions<TDrivers, TVariants>, prop: string, entity: any, protectedKeys?: Set<string>) {
+		if (!(value instanceof Attachment) || !value[ATTACHMENT_LOADED]) {
+			return;
+		}
+
+		const disk = value.getDisk() ?? this.#getDisk(config, value.getDrive() as Extract<keyof TDrivers, string>, false);
+		if (!disk) {
+			return;
+		}
+
+		for (const key of value[ATTACHMENT_FN_KEYS]()) {
+			if (protectedKeys?.has(key)) {
 				continue;
 			}
-
-			const disk = value.getDisk() ?? this.#getDisk(config, value.getDrive() as Extract<keyof TDrivers, string>, false);
-			if (!disk) {
-				continue;
-			}
-
-			for (const key of value[ATTACHMENT_FN_KEYS]()) {
-				try {
-					await disk.delete(key);
-				} catch (error) {
-					console.warn(`AttachmentSubscriber: failed to delete attachment file "${key}" for property "${prop}" on ${entity.constructor?.name ?? "entity"}`, error);
-				}
+			try {
+				await disk.delete(key);
+			} catch (error) {
+				console.warn(`AttachmentSubscriber: failed to delete attachment file "${key}" for property "${prop}" on ${entity.constructor?.name ?? "entity"}`, error);
 			}
 		}
 	}
