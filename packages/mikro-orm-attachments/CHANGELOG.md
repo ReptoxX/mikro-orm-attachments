@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.3.0](https://github.com/reptoxx/mikro-orm-attachments/compare/mikro-orm-attachments@2.2.0...mikro-orm-attachments@2.3.0) (2026-07-13)
+
+
+### Features
+
+* delete old storage files when an attachment is replaced on update ([#18](https://github.com/reptoxx/mikro-orm-attachments/issues/18)) ([9aca74a](https://github.com/reptoxx/mikro-orm-attachments/commit/9aca74ac02ec0043c799d21bda7effaff20121c3))
+
+
+### Bug Fixes
+
+* example app ([#17](https://github.com/reptoxx/mikro-orm-attachments/issues/17)) ([5be560f](https://github.com/reptoxx/mikro-orm-attachments/commit/5be560f94921ed8afd046b9aebf5cdf2fee16981))
+
 ## [2.2.0](https://github.com/reptoxx/mikro-orm-attachments/compare/mikro-orm-attachments@2.1.2...mikro-orm-attachments@2.2.0) (2026-05-29)
 
 ### [2.1.2](https://github.com/reptoxx/mikro-orm-attachments/compare/mikro-orm-attachments@2.1.1...mikro-orm-attachments@2.1.2) (2026-04-08)
