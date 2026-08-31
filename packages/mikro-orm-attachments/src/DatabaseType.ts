@@ -5,7 +5,7 @@ import { Attachment } from "./Attachment";
 import { ATTACHMENT_FN_LOAD, ATTACHMENT_FN_SAVE } from "./symbols";
 import type { AttachmentPropertyOptions } from "./typings";
 
-export class AttachmentType extends Type<Attachment, string> {
+export class AttachmentType extends Type<Attachment, string | null> {
 	private readonly options: AttachmentPropertyOptions = {
 		folder: "attachments",
 		blurhash: true,
