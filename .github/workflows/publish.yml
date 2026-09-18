@@ -35,8 +35,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 'lts/*'
           registry-url: 'https://registry.npmjs.org'
+
+      # Trusted publishing (OIDC) needs npm >= 11.5.1, which the npm bundled with Node LTS is not guaranteed to be.
+      - name: Update npm
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: bun install
@@ -57,11 +61,12 @@ jobs:
         run: bun run copy:readme
         working-directory: ./packages/mikro-orm-attachments
 
+      # Authenticates via OIDC against the trusted publisher configured on npmjs.com
+      # (package settings -> Trusted Publisher -> GitHub Actions, repo + `publish.yml`).
+      # No NPM_TOKEN involved, and provenance is attached automatically.
       - name: Publish to npm
         run: npm publish --access public
         working-directory: ./packages/mikro-orm-attachments
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Push changes and tags
         run: |
