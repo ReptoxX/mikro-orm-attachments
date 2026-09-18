@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: MikroORM uses any */
-import type { EventArgs, FlushEventArgs } from "@mikro-orm/core";
+import { type EventArgs, type FlushEventArgs, Reference, Utils, helper } from "@mikro-orm/core";
 import { Disk } from "flydrive";
 import type { DriverContract } from "flydrive/types";
 
@@ -66,10 +66,42 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 
 	async beforeFlush(args: any): Promise<void> {
 		const { uow } = args as FlushEventArgs;
-		const entities = new Set([...uow.getChangeSets().map((cs) => cs.entity), ...uow.getPersistStack()]);
-		for (const entity of entities) {
+		// `em.persist()` does not cascade (that happens later, in computeChangeSets), and change sets are not
+		// computed yet either, so the stacks only contain explicitly persisted roots. Walk the initialized
+		// relations ourselves, otherwise attachments on cascade-persisted children are never processed.
+		const seen = new Set<any>();
+		const queue: any[] = [...uow.getChangeSets().map((cs) => cs.entity), ...uow.getPersistStack()];
+		while (queue.length > 0) {
+			const entity = queue.pop();
+			if (!entity || seen.has(entity)) {
+				continue;
+			}
+			seen.add(entity);
 			await this.#handleEntity(entity);
+			queue.push(...this.#relatedEntities(entity));
 		}
+	}
+
+	#relatedEntities(entity: any): any[] {
+		const meta = entity.__helper ? helper(entity).__meta : undefined;
+		if (!meta) {
+			return [];
+		}
+		const related: any[] = [];
+		for (const prop of meta.relations) {
+			const value = Reference.unwrapReference(entity[prop.name]);
+			if (!value) {
+				continue;
+			}
+			if (Utils.isCollection(value)) {
+				if (value.isInitialized()) {
+					related.push(...value.getItems(false));
+				}
+			} else if (Utils.isEntity(value)) {
+				related.push(value);
+			}
+		}
+		return related;
 	}
 
 	async #handleEntity(entity: any) {

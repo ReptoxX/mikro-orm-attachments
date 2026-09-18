@@ -24,7 +24,10 @@
 			}
 		},
 		"./converters/BaseConverter": {
-			"import": "./dist/converters/BaseConverter.js"
+			"import": {
+				"types": "./dist/converters/BaseConverter.d.ts",
+				"default": "./dist/converters/BaseConverter.js"
+			}
 		},
 		"./converters/ImgkitConverter": {
 			"import": {
