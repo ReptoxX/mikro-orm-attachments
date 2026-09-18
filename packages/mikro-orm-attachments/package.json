@@ -74,7 +74,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/reptoxx/mikro-orm-attachments"
+		"url": "git+https://github.com/ReptoxX/mikro-orm-attachments.git"
 	},
 	"optionalDependencies": {
 		"sharp": "^0.34.5",
