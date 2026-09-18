@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.3.1](https://github.com/ReptoxX/mikro-orm-attachments/compare/mikro-orm-attachments@2.3.0...mikro-orm-attachments@2.3.1) (2026-09-18)
+
+
+### Bug Fixes
+
+* match repository.url casing to the GitHub owner ([#27](https://github.com/ReptoxX/mikro-orm-attachments/issues/27)) ([3de5de6](https://github.com/ReptoxX/mikro-orm-attachments/commit/3de5de6bb10069ace787be77f042220afcb7033d))
+* process attachments on cascade-persisted entities ([#21](https://github.com/ReptoxX/mikro-orm-attachments/issues/21)) ([1f6f385](https://github.com/ReptoxX/mikro-orm-attachments/commit/1f6f385adc162708cf38b37d131b754520eacc0f))
+
 ## [2.3.0](https://github.com/reptoxx/mikro-orm-attachments/compare/mikro-orm-attachments@2.2.0...mikro-orm-attachments@2.3.0) (2026-07-13)
 
 
