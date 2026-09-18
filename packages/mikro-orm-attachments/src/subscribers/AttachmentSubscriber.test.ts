@@ -339,3 +339,43 @@ describe("AttachmentSubscriber#afterUpdate", () => {
 		}
 	});
 });
+
+describe("AttachmentSubscriber#beforeFlush", () => {
+	const COLLECTION_SYMBOL = Symbol.for("@mikro-orm/core/Collection");
+	const ENTITY_SYMBOL = Symbol.for("@mikro-orm/core/EntityHelper.entity");
+
+	function fakeEntity<T extends object>(entity: T, relations: { name: string }[] = []): T {
+		Object.defineProperty(entity, ENTITY_SYMBOL, { value: true });
+		Object.defineProperty(entity, "__helper", { value: { __meta: { relations } } });
+		return entity;
+	}
+
+	function fakeCollection(items: unknown[]) {
+		const collection = { isInitialized: () => true, getItems: () => items };
+		Object.defineProperty(collection, COLLECTION_SYMBOL, { value: true, enumerable: true });
+		return collection;
+	}
+
+	it("processes attachments on cascade-persisted children, not just on the persisted root", async () => {
+		const root = mkdtempSync(join(tmpdir(), "attachment-flush-test-"));
+		try {
+			const subscriber = new AttachmentSubscriber({
+				drivers: { fs: new FSDriver({ location: root, visibility: "public", urlBuilder: { generateURL: async (key) => `/${key}` } }) },
+				defaultDriver: "fs",
+				variants: {},
+			});
+
+			const child = fakeEntity(new ProjectFixture());
+			child.avatar = Attachment.fromFile(new File([new Uint8Array([1, 2, 3])], "child.png"));
+			// only the parent is in the persist stack — `em.persist()` cascades later, during computeChangeSets
+			const parent = fakeEntity(new ProjectFixture(), [{ name: "children" }]) as ProjectFixture & { children: unknown };
+			parent.children = fakeCollection([child]);
+
+			await subscriber.beforeFlush({ uow: { getChangeSets: () => [], getPersistStack: () => [parent] } });
+
+			expect((child.avatar as Attachment).key()).toBeTruthy();
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+});
