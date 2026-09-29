@@ -371,9 +371,29 @@ describe("AttachmentSubscriber#beforeFlush", () => {
 			const parent = fakeEntity(new ProjectFixture(), [{ name: "children" }]) as ProjectFixture & { children: unknown };
 			parent.children = fakeCollection([child]);
 
-			await subscriber.beforeFlush({ uow: { getChangeSets: () => [], getPersistStack: () => [parent] } });
+			await subscriber.beforeFlush({ uow: { getChangeSets: () => [], getPersistStack: () => [parent], getIdentityMap: () => [] } });
 
 			expect((child.avatar as Attachment).key()).toBeTruthy();
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it("processes attachments assigned to an already-managed entity (loaded, not re-persisted)", async () => {
+		const root = mkdtempSync(join(tmpdir(), "attachment-flush-test-"));
+		try {
+			const subscriber = new AttachmentSubscriber({
+				drivers: { fs: new FSDriver({ location: root, visibility: "public", urlBuilder: { generateURL: async (key) => `/${key}` } }) },
+				defaultDriver: "fs",
+				variants: {},
+			});
+
+			const managed = fakeEntity(new ProjectFixture());
+			managed.avatar = Attachment.fromFile(new File([new Uint8Array([1, 2, 3])], "managed.png"));
+
+			await subscriber.beforeFlush({ uow: { getChangeSets: () => [], getPersistStack: () => [], getIdentityMap: () => [managed] } });
+
+			expect((managed.avatar as Attachment).key()).toBeTruthy();
 		} finally {
 			rmSync(root, { recursive: true, force: true });
 		}

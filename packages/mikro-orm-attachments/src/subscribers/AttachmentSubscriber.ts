@@ -69,8 +69,9 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 		// `em.persist()` does not cascade (that happens later, in computeChangeSets), and change sets are not
 		// computed yet either, so the stacks only contain explicitly persisted roots. Walk the initialized
 		// relations ourselves, otherwise attachments on cascade-persisted children are never processed.
+		// Already-managed entities (loaded, then modified) are in neither stack, only in the identity map.
 		const seen = new Set<any>();
-		const queue: any[] = [...uow.getChangeSets().map((cs) => cs.entity), ...uow.getPersistStack()];
+		const queue: any[] = [...uow.getChangeSets().map((cs) => cs.entity), ...uow.getPersistStack(), ...uow.getIdentityMap()];
 		while (queue.length > 0) {
 			const entity = queue.pop();
 			if (!entity || seen.has(entity)) {

@@ -68,10 +68,15 @@ export class Attachment<Variants extends string = string> {
 	 * Downloads a file from a URL and returns an Attachment object.
 	 *
 	 * @param url - The URL of the file to download.
+	 * @param options.current - The attachment currently stored. If it already points to `url`, it is returned as-is and nothing is downloaded.
 	 * @returns The Attachment object.
 	 * @throws An error if the file cannot be downloaded.
 	 */
-	static async fromUrl(url: string): Promise<Attachment> {
+	static async fromUrl(url: string, options?: { current?: Attachment | null }): Promise<Attachment> {
+		const current = options?.current;
+		if (current && (await current.#pointsTo(url))) {
+			return current;
+		}
 		const response = await fetch(url);
 		const arrayBuffer = await response.arrayBuffer();
 		let filename: string | undefined;
@@ -99,6 +104,39 @@ export class Attachment<Variants extends string = string> {
 		return att;
 	}
 
+	/**
+	 * Resolves an incoming URL (e.g. from a request body) against the currently stored attachment:
+	 * - `undefined` keeps `current` (field not sent)
+	 * - `null` / `""` clears it
+	 * - the URL `current` already points to keeps `current`
+	 * - any other URL is downloaded into a new attachment
+	 */
+	static async resolve(value: string | null | undefined, current?: Attachment | null): Promise<Attachment | null | undefined> {
+		if (value === undefined) {
+			return current;
+		}
+		if (!value) {
+			return null;
+		}
+		return Attachment.fromUrl(value, { current });
+	}
+
+	/** Whether `url` is this attachment's original or one of its variant URLs. */
+	async #pointsTo(url: string) {
+		if (!this[ATTACHMENT_LOADED]) {
+			return false;
+		}
+		if (this.url() === url) {
+			return true;
+		}
+		for (const variant of (this.data as ImageAttachment).variants ?? []) {
+			if ((await this[ATTACHMENT_DISK]?.getUrl(variant.path)) === url) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	#getVariant(variantName: string) {
 		this.#ensureLoaded();
 		const variant = (this.data as ImageAttachment)?.variants.find((v) => v.name === variantName) ?? null;
@@ -116,12 +154,14 @@ export class Attachment<Variants extends string = string> {
 		return this.data?.path;
 	}
 
-	url(variant?: Variants) {
+	url(): string;
+	url(variant: Variants): Promise<string> | undefined;
+	url(variant?: Variants): string | Promise<string> | undefined {
 		this.#ensureLoaded();
 		if (variant) {
 			return this.#disk?.getUrl(this.#getVariant(variant).path);
 		}
-		return (this.data as ImageAttachment)?.url;
+		return (this.data as ImageAttachment).url;
 	}
 
 	originalName() {
