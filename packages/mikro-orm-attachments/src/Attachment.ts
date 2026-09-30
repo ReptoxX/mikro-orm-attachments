@@ -20,14 +20,14 @@ export class Attachment<Variants extends string = string> {
 		}
 	}
 
-	#ensureLoaded() {
+	private ensureLoaded() {
 		if (!this[ATTACHMENT_LOADED]) {
 			throw new Error("Attachment is not processed, please flush the entity first.");
 		}
 	}
 
-	get #disk() {
-		this.#ensureLoaded();
+	private get disk() {
+		this.ensureLoaded();
 		return this[ATTACHMENT_DISK];
 	}
 
@@ -59,6 +59,14 @@ export class Attachment<Variants extends string = string> {
 		this[ATTACHMENT_LOADED] = true;
 	}
 
+	/**
+	 * Picked up by MikroORM's `Utils.copy()` (e.g. filter params on `em.fork()`): keeps the flydrive `Disk`
+	 * by reference instead of deep-copying it (its `#private` fields would not survive).
+	 */
+	clone(): Attachment<Variants> {
+		return Object.assign(new Attachment<Variants>({} as AttachmentBase), this);
+	}
+
 	static fromFile(file: File): Attachment {
 		const att = new Attachment(file);
 		return att;
@@ -74,7 +82,7 @@ export class Attachment<Variants extends string = string> {
 	 */
 	static async fromUrl(url: string, options?: { current?: Attachment | null }): Promise<Attachment> {
 		const current = options?.current;
-		if (current && (await current.#pointsTo(url))) {
+		if (current && (await current.pointsTo(url))) {
 			return current;
 		}
 		const response = await fetch(url);
@@ -122,7 +130,7 @@ export class Attachment<Variants extends string = string> {
 	}
 
 	/** Whether `url` is this attachment's original or one of its variant URLs. */
-	async #pointsTo(url: string) {
+	private async pointsTo(url: string) {
 		if (!this[ATTACHMENT_LOADED]) {
 			return false;
 		}
@@ -137,8 +145,8 @@ export class Attachment<Variants extends string = string> {
 		return false;
 	}
 
-	#getVariant(variantName: string) {
-		this.#ensureLoaded();
+	private getVariant(variantName: string) {
+		this.ensureLoaded();
 		const variant = (this.data as ImageAttachment)?.variants.find((v) => v.name === variantName) ?? null;
 		if (!variant) {
 			throw new Error(`Attachment: Variant '${variantName}' not found`);
@@ -147,9 +155,9 @@ export class Attachment<Variants extends string = string> {
 	}
 
 	key(variant?: Variants) {
-		this.#ensureLoaded();
+		this.ensureLoaded();
 		if (variant) {
-			return this.#getVariant(variant).path;
+			return this.getVariant(variant).path;
 		}
 		return this.data?.path;
 	}
@@ -157,9 +165,9 @@ export class Attachment<Variants extends string = string> {
 	url(): string;
 	url(variant: Variants): Promise<string> | undefined;
 	url(variant?: Variants): string | Promise<string> | undefined {
-		this.#ensureLoaded();
+		this.ensureLoaded();
 		if (variant) {
-			return this.#disk?.getUrl(this.#getVariant(variant).path);
+			return this.disk?.getUrl(this.getVariant(variant).path);
 		}
 		return (this.data as ImageAttachment).url;
 	}
@@ -170,33 +178,33 @@ export class Attachment<Variants extends string = string> {
 
 	size(variant?: Variants) {
 		if (variant) {
-			return this.#getVariant(variant).size;
+			return this.getVariant(variant).size;
 		}
 		return this.data?.size;
 	}
 
 	meta(variant?: Variants) {
 		if (variant) {
-			return this.#getVariant(variant).meta;
+			return this.getVariant(variant).meta;
 		}
 		return this.data?.meta;
 	}
 
 	async preSignedUrl(variantNameOrOptions?: string | SignedURLOptions, signedUrlOptions?: SignedURLOptions) {
-		this.#ensureLoaded();
+		this.ensureLoaded();
 		if (typeof variantNameOrOptions === "string") {
-			return this.#disk?.getSignedUrl(this.#getVariant(variantNameOrOptions).path, signedUrlOptions);
+			return this.disk?.getSignedUrl(this.getVariant(variantNameOrOptions).path, signedUrlOptions);
 		}
-		return this.#disk?.getSignedUrl(this.data?.path ?? "", signedUrlOptions);
+		return this.disk?.getSignedUrl(this.data?.path ?? "", signedUrlOptions);
 	}
 
 	blurhash() {
-		this.#ensureLoaded();
+		this.ensureLoaded();
 		return (this.data as ImageAttachment)?.blurhash;
 	}
 
 	getDisk() {
-		return this.#disk;
+		return this.disk;
 	}
 
 	getDrive() {
@@ -204,13 +212,13 @@ export class Attachment<Variants extends string = string> {
 	}
 
 	async getBytes(variantName?: Variants) {
-		this.#ensureLoaded();
-		const path = variantName ? this.#getVariant(variantName).path : (this.data?.path ?? "");
-		return this.#disk?.getBytes(path);
+		this.ensureLoaded();
+		const path = variantName ? this.getVariant(variantName).path : (this.data?.path ?? "");
+		return this.disk?.getBytes(path);
 	}
 
 	async getBuffer(variantName?: Variants) {
-		this.#ensureLoaded();
+		this.ensureLoaded();
 		const bytes = await this.getBytes(variantName);
 		if (!bytes) {
 			return null;
@@ -219,14 +227,14 @@ export class Attachment<Variants extends string = string> {
 	}
 
 	async getStream(variantName?: Variants) {
-		this.#ensureLoaded();
-		const path = variantName ? this.#getVariant(variantName).path : (this.data?.path ?? "");
-		return this.#disk?.getStream(path);
+		this.ensureLoaded();
+		const path = variantName ? this.getVariant(variantName).path : (this.data?.path ?? "");
+		return this.disk?.getStream(path);
 	}
 
 	getMimeType(variantName?: Variants) {
-		this.#ensureLoaded();
-		const variant = variantName ? this.#getVariant(variantName) : this.data;
+		this.ensureLoaded();
+		const variant = variantName ? this.getVariant(variantName) : this.data;
 		return variant?.mimeType ?? "";
 	}
 

@@ -1,4 +1,5 @@
 import { describe, expect, it, spyOn } from "bun:test";
+import { Utils } from "@mikro-orm/core";
 
 import { Attachment } from "./Attachment";
 import { ATTACHMENT_DISK, ATTACHMENT_FN_KEYS, ATTACHMENT_LOADED } from "./symbols";
@@ -94,5 +95,29 @@ describe("Attachment.resolve", () => {
 		} finally {
 			fetchSpy.mockRestore();
 		}
+	});
+});
+
+describe("Attachment clone", () => {
+	it("survives MikroORM's Utils.copy (e.g. filter params on em.fork())", () => {
+		const copy = Utils.copy({ user: { image: loaded("a/a.png", [{ path: "a/v.png" }]) } }).user.image;
+		expect(copy).toBeInstanceOf(Attachment);
+		expect(copy.key()).toBe("a/a.png");
+		expect(copy.key("variant-0")).toBe("a/v.png");
+	});
+
+	it("survives a generic prototype copy (arktype's deepClone before morphs)", async () => {
+		const original = loaded("a/a.png", [{ path: "a/v.png" }]);
+		original[ATTACHMENT_DISK] = { getUrl: async (key: string) => `https://cdn/${key}` } as never;
+		const copy = Object.create(Object.getPrototypeOf(original), Object.getOwnPropertyDescriptors(original)) as Attachment;
+		expect(copy.key("variant-0")).toBe("a/v.png");
+		expect(await copy.url("variant-0")).toBe("https://cdn/a/v.png");
+		expect(() => JSON.stringify(copy)).not.toThrow();
+	});
+
+	it("keeps an unprocessed attachment unprocessed", () => {
+		const copy = Utils.copy(Attachment.fromFile(new File(["x"], "a.png")));
+		expect(copy[ATTACHMENT_LOADED]).toBe(false);
+		expect(() => copy.key()).toThrow("Attachment is not processed");
 	});
 });
