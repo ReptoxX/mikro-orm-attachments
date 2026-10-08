@@ -105,3 +105,14 @@ export interface ImageAttachment extends AttachmentBase {
 }
 
 export type VariantSpec = BaseConverter<ConvertInput, ConvertOutput>;
+
+/**
+ * Augment with your subscriber to type `AttachmentProperty` options:
+ * `declare module "mikro-orm-attachments" { interface Register { subscriber: typeof attachmentSubscriber } }`
+ */
+// biome-ignore lint/suspicious/noEmptyInterface: filled by declaration merging
+export interface Register {}
+
+export type RegisteredSubscriber = Register extends { subscriber: infer S extends AttachmentSubscriber<any, any> }
+	? S
+	: AttachmentSubscriber<Record<string, DriverContract>, Record<string, VariantSpec>>;

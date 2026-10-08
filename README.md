@@ -46,15 +46,20 @@ const attachmentSubscriber = new AttachmentSubscriber({
 	defaultDriver: "fs",
 });
 
-export const AttachmentProperty = attachmentSubscriber.AttachmentDecorator;
+declare module "mikro-orm-attachments" {
+	interface Register {
+		subscriber: typeof attachmentSubscriber;
+	}
+}
 ```
+
+Registering the subscriber types `AttachmentProperty` options (`driver`, global `variants`) across your app.
 
 ### 2. Define an Entity with an Attachment
 
 ```ts
 import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
-import { Attachment } from "mikro-orm-attachments";
-import { AttachmentProperty } from "./attachmentSubscriber";
+import { Attachment, AttachmentProperty } from "mikro-orm-attachments";
 
 @Entity()
 export class Project {
@@ -68,6 +73,24 @@ export class Project {
 	avatar!: Attachment;
 }
 ```
+
+#### Or with `defineEntity`
+
+```ts
+import { defineEntity, p } from "@mikro-orm/core";
+import { attachment } from "mikro-orm-attachments";
+
+export const Project = defineEntity({
+	name: "Project",
+	properties: {
+		id: p.integer().primary(),
+		avatar: attachment({ variants: ["thumbnail"] }).nullable(), // Attachment<"thumbnail"> | null
+		screenshots: attachment({ multiple: true }), // Attachment[]
+	},
+});
+```
+
+The property type is inferred from the options, so `project.avatar?.url("thumbnail")` autocompletes the declared variants.
 
 ### 3. Use the subscriber in your MikroORM Config
 
@@ -101,6 +124,29 @@ const project = orm.em.create(Project, {
 await orm.em.persist(project).flush(); // flush before using. Image gets uploaded and resized in this step.
 
 // avatar column will be persisted: includes URL, size, variants, etc.
+```
+
+### Multiple Attachments
+
+Type the property as an array, the same decorator handles it (stored as a JSON array in one column):
+
+```ts
+@AttachmentProperty({ variants: ["thumbnail"] })
+screenshots: Attachment<"thumbnail">[] = [];
+
+project.screenshots = [...project.screenshots, Attachment.fromFile(file)];
+await orm.em.flush(); // only the new item is uploaded
+```
+
+Every item gets the property's variants. On update, files of items no longer in the list are deleted; on delete, all of them.
+
+### Type-checked variants
+
+Variant names in `Attachment<"...">` must be listed in `variants`, otherwise the decorator does not compile:
+
+```ts
+@AttachmentProperty({ variants: ["thumbnail"] })
+avatar?: Attachment<"thumbnail" | "large">; // error: Variant "large" is missing in AttachmentProperty({ variants })
 ```
 
 ### Accessing Attachment Metadata
@@ -219,7 +265,7 @@ Resulting attachments will include a `.blurhash()` function, that returns the co
 
 ### `AttachmentProperty(options)`
 
-Decorator for MikroORM entity properties.
+Decorator for `Attachment` and `Attachment[]` entity properties, imported from the package.
 
 **Options:**
 

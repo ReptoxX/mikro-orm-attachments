@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { FSDriver } from "flydrive/drivers/fs";
 
 import { Attachment } from "../Attachment";
+import { AttachmentType } from "../DatabaseType";
 import { AttachmentDecorator } from "../decorators/AttachmentDecorator";
 import { AttachmentSubscriber } from "./AttachmentSubscriber";
 
@@ -14,6 +15,11 @@ class ProjectFixture {
 }
 AttachmentDecorator()(ProjectFixture.prototype, "avatar");
 AttachmentDecorator()(ProjectFixture.prototype, "cover");
+
+class GalleryFixture {
+	photos: unknown;
+}
+AttachmentDecorator()(GalleryFixture.prototype, "photos");
 
 function rawAttachmentData(path: string, variantPaths: string[] = []) {
 	return {
@@ -394,6 +400,127 @@ describe("AttachmentSubscriber#beforeFlush", () => {
 			await subscriber.beforeFlush({ uow: { getChangeSets: () => [], getPersistStack: () => [], getIdentityMap: () => [managed] } });
 
 			expect((managed.avatar as Attachment).key()).toBeTruthy();
+		} finally {
+			rmSync(root, { recursive: true, force: true });
+		}
+	});
+});
+
+describe("Attachments (list property)", () => {
+	let root: string;
+
+	beforeEach(() => {
+		root = mkdtempSync(join(tmpdir(), "attachments-test-"));
+	});
+
+	afterEach(() => {
+		rmSync(root, { recursive: true, force: true });
+	});
+
+	function writeFixtureFile(relativePath: string) {
+		const full = join(root, relativePath);
+		mkdirSync(dirname(full), { recursive: true });
+		writeFileSync(full, "content");
+	}
+
+	function makeSubscriber() {
+		return new AttachmentSubscriber({
+			drivers: { fs: new FSDriver({ location: root, visibility: "public", urlBuilder: { generateURL: async (key) => `/${key}` } }) },
+			defaultDriver: "fs",
+			variants: {},
+		});
+	}
+
+	it("round-trips through the database type as a JSON array", () => {
+		const type = new AttachmentType({});
+		const stored = type.convertToDatabaseValue([loadedAttachment("a.png"), loadedAttachment("b.png")], {} as never);
+		const loaded = type.convertToJSValue(stored) as Attachment[];
+
+		expect(typeof stored).toBe("string");
+		expect(loaded.map((item) => item.key())).toEqual(["a.png", "b.png"]);
+		expect(type.convertToJSValue(JSON.parse(stored as string))).toHaveLength(2);
+		expect(type.convertToJSValue(rawAttachmentData("single.png"))).toBeInstanceOf(Attachment);
+	});
+
+	it("processes every unflushed attachment in the list and skips loaded ones", async () => {
+		const subscriber = makeSubscriber();
+		const entity = new GalleryFixture();
+		const kept = loadedAttachment("kept.png");
+		entity.photos = [kept, Attachment.fromFile(new File([new Uint8Array([1])], "one.png")), Attachment.fromFile(new File([new Uint8Array([2])], "two.png"))];
+
+		await subscriber.beforeFlush({ uow: { getChangeSets: () => [], getPersistStack: () => [entity], getIdentityMap: () => [] } });
+
+		const keys = (entity.photos as Attachment[]).map((item) => item.key());
+		expect(keys[0]).toBe("kept.png");
+		expect(new Set(keys).size).toBe(3);
+		for (const key of keys.slice(1)) {
+			expect(existsSync(join(root, key as string))).toBe(true);
+		}
+	});
+
+	it("attaches the disk to every list item on load", async () => {
+		const subscriber = makeSubscriber();
+		const entity = new GalleryFixture();
+		entity.photos = [loadedAttachment("a.png"), loadedAttachment("b.png")];
+
+		await subscriber.onLoad({ entity });
+
+		for (const item of entity.photos as Attachment[]) {
+			expect(item.getDisk()).toBeTruthy();
+		}
+	});
+
+	it("deletes only the removed items on update", async () => {
+		writeFixtureFile("keep.png");
+		writeFixtureFile("drop.png");
+		writeFixtureFile("drop-thumb.png");
+
+		const subscriber = makeSubscriber();
+		const entity = new GalleryFixture();
+		entity.photos = [loadedAttachment("keep.png")];
+
+		const original = JSON.stringify([rawAttachmentData("keep.png"), rawAttachmentData("drop.png", ["drop-thumb.png"])]);
+		await subscriber.afterUpdate({ changeSet: updateChangeSet(entity, ["photos"], { photos: original }) });
+
+		expect(existsSync(join(root, "keep.png"))).toBe(true);
+		expect(existsSync(join(root, "drop.png"))).toBe(false);
+		expect(existsSync(join(root, "drop-thumb.png"))).toBe(false);
+	});
+
+	it("deletes every item when the entity is deleted", async () => {
+		writeFixtureFile("a.png");
+		writeFixtureFile("b.png");
+
+		const subscriber = makeSubscriber();
+		const entity = new GalleryFixture();
+		entity.photos = [loadedAttachment("a.png"), loadedAttachment("b.png")];
+
+		await subscriber.afterDelete({ entity });
+
+		expect(existsSync(join(root, "a.png"))).toBe(false);
+		expect(existsSync(join(root, "b.png"))).toBe(false);
+	});
+});
+
+describe("defineEntity (no decorator)", () => {
+	it("finds attachment properties through entity metadata", async () => {
+		const root = mkdtempSync(join(tmpdir(), "attachment-define-entity-test-"));
+		try {
+			const subscriber = new AttachmentSubscriber({
+				drivers: { fs: new FSDriver({ location: root, visibility: "public", urlBuilder: { generateURL: async (key) => `/${key}` } }) },
+				defaultDriver: "fs",
+				variants: {},
+			});
+			const entity: Record<string, unknown> = { cover: Attachment.fromFile(new File([new Uint8Array([1])], "c.png")), title: "x" };
+			const props = [
+				{ name: "cover", customType: new AttachmentType({ folder: "covers" }) },
+				{ name: "title", customType: undefined },
+			];
+			Object.defineProperty(entity, "__helper", { value: { __meta: { props, relations: [] } } });
+
+			await subscriber.beforeFlush({ uow: { getChangeSets: () => [], getPersistStack: () => [entity], getIdentityMap: () => [] } });
+
+			expect((entity.cover as Attachment).key()).toStartWith("covers/");
 		} finally {
 			rmSync(root, { recursive: true, force: true });
 		}
