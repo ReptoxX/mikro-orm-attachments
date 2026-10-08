@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: MikroORM uses any */
-import { type EventArgs, type FlushEventArgs, Reference, Utils, helper } from "@mikro-orm/core";
+import { type EventArgs, type FlushEventArgs, helper, Reference, Utils } from "@mikro-orm/core";
 import { Disk } from "flydrive";
 import type { DriverContract } from "flydrive/types";
 
@@ -38,9 +38,8 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 		const { entity } = args as EventArgs<any>;
 		const props = getAttachmentProps<AttachmentSubscriber<TDrivers, TVariants>>(entity);
 		for (const prop of Object.keys(props)) {
-			const value = entity[prop];
 			const config = props[prop];
-			if (value instanceof Attachment) {
+			for (const value of attachmentsOf(entity[prop])) {
 				const disk = this.#getDisk(config, value.getDrive() as Extract<keyof TDrivers, string>, false);
 				if (!disk) {
 					continue;
@@ -108,9 +107,8 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 	async #handleEntity(entity: any) {
 		const props = getAttachmentProps<AttachmentSubscriber<TDrivers, TVariants>>(entity);
 		for (const prop of Object.keys(props)) {
-			const value = entity[prop];
 			const config = props[prop];
-			if (value instanceof Attachment) {
+			for (const value of attachmentsOf(entity[prop])) {
 				if (value[ATTACHMENT_LOADED]) {
 					continue;
 				}
@@ -162,13 +160,16 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 			}
 
 			const config = props[prop];
-			const oldAttachment = new AttachmentType(config).convertToJSValue(rawOld);
+			const oldValue = new AttachmentType(config).convertToJSValue(rawOld);
 
-			// guard against deleting a key the new value also uses (possible when `rename: false` reuses filenames)
-			const newValue = entity[prop];
-			const protectedKeys = newValue instanceof Attachment && newValue[ATTACHMENT_LOADED] ? new Set(newValue[ATTACHMENT_FN_KEYS]()) : undefined;
+			// guard against deleting keys the new value still uses (kept items of a list, or `rename: false` reusing filenames)
+			const protectedKeys = new Set(
+				attachmentsOf(entity[prop])
+					.filter((value) => value[ATTACHMENT_LOADED])
+					.flatMap((value) => value[ATTACHMENT_FN_KEYS]()),
+			);
 
-			await this.#deleteAttachmentFiles(oldAttachment, config, prop, entity, protectedKeys);
+			await this.#deleteAttachmentFiles(oldValue, config, prop, entity, protectedKeys);
 		}
 	}
 
@@ -185,27 +186,30 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 	}
 
 	async #deleteAttachmentFiles(value: unknown, config: AttachmentPropertyOptions<TDrivers, TVariants>, prop: string, entity: any, protectedKeys?: Set<string>) {
-		if (!(value instanceof Attachment) || !value[ATTACHMENT_LOADED]) {
-			return;
-		}
-
-		const disk = value.getDisk() ?? this.#getDisk(config, value.getDrive() as Extract<keyof TDrivers, string>, false);
-		if (!disk) {
-			return;
-		}
-
-		for (const key of value[ATTACHMENT_FN_KEYS]()) {
-			if (protectedKeys?.has(key)) {
+		for (const attachment of attachmentsOf(value)) {
+			if (!attachment[ATTACHMENT_LOADED]) {
 				continue;
 			}
-			try {
-				await disk.delete(key);
-			} catch (error) {
-				console.warn(`AttachmentSubscriber: failed to delete attachment file "${key}" for property "${prop}" on ${entity.constructor?.name ?? "entity"}`, error);
+
+			const disk = attachment.getDisk() ?? this.#getDisk(config, attachment.getDrive() as Extract<keyof TDrivers, string>, false);
+			if (!disk) {
+				continue;
+			}
+
+			for (const key of attachment[ATTACHMENT_FN_KEYS]()) {
+				if (protectedKeys?.has(key)) {
+					continue;
+				}
+				try {
+					await disk.delete(key);
+				} catch (error) {
+					console.warn(`AttachmentSubscriber: failed to delete attachment file "${key}" for property "${prop}" on ${entity.constructor?.name ?? "entity"}`, error);
+				}
 			}
 		}
 	}
 
+	/** @deprecated Import `AttachmentProperty` from the package and register the subscriber via `Register`. */
 	AttachmentDecorator(options?: AttachmentDecoratorProps<AttachmentSubscriber<TDrivers, TVariants>>) {
 		return createAttachmentDecorator<AttachmentSubscriber<TDrivers, TVariants>>(options);
 	}
@@ -235,4 +239,9 @@ export class AttachmentSubscriber<const TDrivers extends Record<string, DriverCo
 
 		return undefined;
 	}
+}
+
+function attachmentsOf(value: unknown): Attachment[] {
+	const list = Array.isArray(value) ? value : [value];
+	return list.filter((item): item is Attachment => item instanceof Attachment);
 }
